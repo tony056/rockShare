@@ -3,6 +3,7 @@ package com.example.tungying_chao.beanconnection;
 import android.app.Application;
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import nl.littlerobots.bean.Bean;
 import nl.littlerobots.bean.BeanListener;
@@ -36,12 +37,21 @@ public class BeanConnectionApplication extends Application {
 
         @Override
         public void onSerialMessageReceived(byte[] bytes) {
+//            Log.d(TAG, "length: " + bytes.length);
 
         }
 
         @Override
         public void onScratchValueChanged(int i, byte[] bytes) {
+            int length = bytes.length;
 
+            int cmd = 0;
+            if(length == 4){
+                cmd = bytes[3] << 24 | (bytes[2] & 0xff) << 16 | (bytes[1] & 0xff) << 8
+                            | (bytes[0] & 0xff);
+            }
+            Log.d(TAG, "Get bank: " + i + ", data: " + cmd);
+//            Toast.makeText(getApplicationContext(), "data: " + cmd, Toast.LENGTH_SHORT).show();
         }
     };
 
