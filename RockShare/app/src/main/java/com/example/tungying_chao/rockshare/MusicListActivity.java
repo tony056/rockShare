@@ -6,50 +6,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
 
-import nl.littlerobots.bean.Bean;
-
-
 /**
- * Created by tungying-chao on 5/29/15.
+ * Created by tungying-chao on 5/30/15.
  */
-public class MenuActivity extends Activity {
+public class MusicListActivity extends Activity {
+    private TextView cmdTextView;
 
-    private static final String TAG = "MenuActivity";
-    private Button mBtnOn;
-    private Button mBtnOff;
-    private boolean isOn = false;
-    private Bean myBean;
-    private Button.OnClickListener tempBtnClickListener;
-
-    {
-        tempBtnClickListener = new Button.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if (v.getId() == R.id.ledOff) {
-                    Intent intent = new Intent();
-                    intent.setClass(getApplicationContext(), MusicListActivity.class);
-                    startActivity(intent);
-                } else {
-                    if (isOn) {
-                        myBean.setLed(0, 0, 255);
-                    } else {
-                        myBean.setLed(0, 255, 0);
-                    }
-                    isOn = !isOn;
-                }
-            }
-        };
-    }
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -74,26 +43,30 @@ public class MenuActivity extends Activity {
                 }
                 if(event.length() == 0)
                     return;
-                Toast.makeText(getApplicationContext(), event, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getApplicationContext(), event, Toast.LENGTH_SHORT).show();
+                cmdTextView.setText(event);
             }
         }
     };
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.menu_activity);
-        mBtnOn = (Button)findViewById(R.id.ledOn);
-        mBtnOff = (Button)findViewById(R.id.ledOff);
-
-        if(((BeanConnectionApplication)getApplicationContext()).getMyBean() != null){
-            myBean = ((BeanConnectionApplication)getApplicationContext()).getMyBean();
-        }
-        mBtnOn.setOnClickListener(tempBtnClickListener);
-        mBtnOff.setOnClickListener(tempBtnClickListener);
+        setContentView(R.layout.music_list_activity);
+        cmdTextView = (TextView)findViewById(R.id.commandTextView);
     }
 
+    @Override
+    public void onPause(){
+        super.onPause();
+        unregisterReceiver(mBroadcastReceiver);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        registerReceiverForBeanTouchEvent();
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -116,33 +89,9 @@ public class MenuActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onDestroy(){
-
-        super.onDestroy();
-
-        Log.d(TAG, "onDestroy()");
-    }
-
-    @Override
-    public void onPause() {
-        Log.d(TAG, "onPause()");
-        super.onPause();
-        unregisterReceiver(mBroadcastReceiver);
-    }
-
-    @Override
-    public void onResume(){
-        Log.d(TAG, "onResume");
-        super.onResume();
-        registerReceiverForBeanTouchEvent();
-    }
-
-
     private void registerReceiverForBeanTouchEvent(){
         IntentFilter mFilter = new IntentFilter(BeanConnectionApplication.TOUCH_EVENT);
         registerReceiver(mBroadcastReceiver, mFilter);
     }
-
 
 }

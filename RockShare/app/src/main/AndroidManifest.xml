@@ -23,6 +23,7 @@
         </activity>
         <activity
             android:name="com.example.tungying_chao.rockshare.MenuActivity" />
+        <activity android:name="com.example.tungying_chao.rockshare.MusicListActivity" />
 
 
     </application>
