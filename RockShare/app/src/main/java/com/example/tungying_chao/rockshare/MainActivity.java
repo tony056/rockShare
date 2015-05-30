@@ -2,7 +2,6 @@ package com.example.tungying_chao.rockshare;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -12,18 +11,22 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import in.srain.cube.views.ptr.PtrFrameLayout;
+import in.srain.cube.views.ptr.PtrHandler;
+import in.srain.cube.views.ptr.header.MaterialHeader;
+import in.srain.cube.views.ptr.util.PtrLocalDisplay;
 import nl.littlerobots.bean.Bean;
 import nl.littlerobots.bean.BeanDiscoveryListener;
 import nl.littlerobots.bean.BeanManager;
 
 
 public class MainActivity extends Activity {
+    private static final String TAG = "MainActivity";
     private BeanDiscoveryListener mBeanDiscoveryListener = new BeanDiscoveryListener() {
         @Override
         public void onBeanDiscovered(Bean bean) {
@@ -31,7 +34,7 @@ public class MainActivity extends Activity {
             Log.e("Bean", "Getbean");
             mBeanList.add(bean);
             beanDevices.add(bean.getDevice().getName().toString());
-            adapter.notifyDataSetChanged();
+//            adapter.notifyDataSetChanged();
         }
 
         @Override
@@ -44,7 +47,8 @@ public class MainActivity extends Activity {
     private List<String> beanDevices = new ArrayList<String>();
     private List<Bean> mBeanList = new ArrayList<Bean>();
     private ArrayAdapter<String> adapter;
-    private boolean isConnected = false;
+    private int prevListLength = 0;
+
     public Bean bean;
     private ListView.OnItemClickListener mListViewClickListener = new ListView.OnItemClickListener(){
 
@@ -65,6 +69,8 @@ public class MainActivity extends Activity {
             }
         }
     };
+    private PtrFrameLayout mPtrFrameLayout;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +81,71 @@ public class MainActivity extends Activity {
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, beanDevices);
         mBeanListView.setAdapter(adapter);
         mBeanListView.setOnItemClickListener(mListViewClickListener);
+
+        mPtrFrameLayout = (PtrFrameLayout)findViewById(R.id.bean_connection_list);
+
+        final MaterialHeader header = new MaterialHeader(getApplicationContext());
+        int[] colors = getResources().getIntArray(R.array.google_colors);
+        header.setColorSchemeColors(colors);
+        header.setLayoutParams(new PtrFrameLayout.LayoutParams(-1, -2));
+        header.setPadding(0, PtrLocalDisplay.dp2px(15), 0, PtrLocalDisplay.dp2px(10));
+        header.setPtrFrameLayout(mPtrFrameLayout);
+
+        mPtrFrameLayout.setLoadingMinTime(1000);
+        mPtrFrameLayout.setDurationToCloseHeader(1500);
+        mPtrFrameLayout.setHeaderView(header);
+        mPtrFrameLayout.addPtrUIHandler(header);
+        mPtrFrameLayout.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mPtrFrameLayout.autoRefresh(false);
+            }
+        }, 100);
+
+        mPtrFrameLayout.setPtrHandler(new PtrHandler() {
+            @Override
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+                return true;
+            }
+
+            @Override
+            public void onRefreshBegin(final PtrFrameLayout frame) {
+                Log.d("Main", "onRefresh");
+//                if(prevListLength != beanDevices.size()){
+//                    Log.d(TAG, "diff");
+//
+//                }else{
+//                    Log.d(TAG, "diff: " + prevListLength + ", " + beanDevices.size());
+//
+//                }
+
+                frame.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        frame.refreshComplete();
+                        if(prevListLength != beanDevices.size()) {
+                            adapter.notifyDataSetChanged();
+                            prevListLength = beanDevices.size();
+                        }
+
+                    }
+                }, 0);
+//                if (mImageHasLoaded) {
+//                    long delay = (long) (1000 + Math.random() * 2000);
+//                    delay = Math.max(0, delay);
+//                    delay = 0;
+//                    frame.postDelayed(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            frame.refreshComplete();
+//                        }
+//                    }, delay);
+//                } else {
+//                    mStartLoadingTime = System.currentTimeMillis();
+//                    imageView.loadImage(imageLoader, mUrl);
+//                }
+            }
+        });
     }
 
     @Override
