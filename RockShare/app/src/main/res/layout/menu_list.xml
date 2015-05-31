@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1">
+
+    <ImageButton
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:id="@+id/discover"
+        android:layout_weight="0.35"
+        android:onClick="onClickDiscover"
+        android:text="Discover"
+        android:src="@drawable/discover"
+        android:scaleType="fitXY"
+
+
+    />
+
+    <ImageButton
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:id="@+id/musicPlayer"
+        android:layout_weight="0.35"
+        android:onClick="onClickMusic"
+        android:text="Music Player"
+        android:src="@drawable/user_list"
+        android:scaleType="fitXY" />
+
+</LinearLayout>
