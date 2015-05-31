@@ -24,7 +24,7 @@
         <activity
             android:name="com.example.tungying_chao.rockshare.MenuActivity" />
         <activity android:name="com.example.tungying_chao.rockshare.MusicListActivity" />
-
+        <activity android:name="com.example.tungying_chao.rockshare.BeanListActivity" />
 
     </application>
     <!--<application

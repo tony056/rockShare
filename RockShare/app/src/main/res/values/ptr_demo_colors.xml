@@ -4,4 +4,9 @@
     <color name="blue">#FF375BF1</color>
     <color name="yellow">#FFF7D23E</color>
     <color name="green">#FF34A350</color>
+    <color name="cyan">#239CEA</color>
+    <color name="cyan_dark">#239CFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="magenta">#E60080</color>
+    <color name="text_gray">#808080</color>
 </resources>

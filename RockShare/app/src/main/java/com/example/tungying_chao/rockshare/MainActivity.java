@@ -2,6 +2,7 @@ package com.example.tungying_chao.rockshare;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -9,9 +10,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
+import com.gc.materialdesign.views.ButtonFlat;
+import com.rengwuxian.materialedittext.MaterialEditText;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,125 +33,30 @@ import nl.littlerobots.bean.BeanManager;
 
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
-    private BeanDiscoveryListener mBeanDiscoveryListener = new BeanDiscoveryListener() {
-        @Override
-        public void onBeanDiscovered(Bean bean) {
-//            helloText.setText("Name: " + bean.getDevice().getName().toString());
-            Log.e("Bean", "Getbean");
-            mBeanList.add(bean);
-            beanDevices.add(bean.getDevice().getName().toString());
-//            adapter.notifyDataSetChanged();
-        }
+    private static final String USER = "USER";
+    private static final String NICK_NAME = "NICK_NAME";
+
+
+    private EditText nickNameEditText;
+    private ButtonFlat nickNameEnterButton;
+
+    private SharedPreferences nickNamePreference;
+    private Button.OnClickListener mOnClickListener = new Button.OnClickListener(){
 
         @Override
-        public void onDiscoveryComplete() {
-            Log.e("Bean", "Completed");
-        }
-    };
-
-    private ListView mBeanListView;
-    private List<String> beanDevices = new ArrayList<String>();
-    private List<Bean> mBeanList = new ArrayList<Bean>();
-    private ArrayAdapter<String> adapter;
-    private int prevListLength = 0;
-
-    public Bean bean;
-    private ListView.OnItemClickListener mListViewClickListener = new ListView.OnItemClickListener(){
-
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            String beanName = parent.getItemAtPosition(position).toString();
-            if(mBeanList.get(position).getDevice().getName().toString().equals(beanName)){
-                bean = mBeanList.get(position);
-                Bean backgroundBean = ((BeanConnectionApplication)getApplicationContext()).getMyBean();
-                if(backgroundBean == null){
-                    Log.e("Bean", "connecting");
-                    ((BeanConnectionApplication)getApplicationContext()).setContext(getApplicationContext());
-                    ((BeanConnectionApplication)getApplicationContext()).setMyBean(bean);
-                }
-                Intent intent = new Intent();
-                intent.setClass(getApplicationContext(), MenuActivity.class);
-                startActivity(intent);
-            }
+        public void onClick(View v) {
+            saveNickName();
         }
     };
-    private PtrFrameLayout mPtrFrameLayout;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.bean_connection);
-        mBeanListView = (ListView)findViewById(R.id.listView);
-        BeanManager.getInstance().startDiscovery(mBeanDiscoveryListener);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, beanDevices);
-        mBeanListView.setAdapter(adapter);
-        mBeanListView.setOnItemClickListener(mListViewClickListener);
-
-        mPtrFrameLayout = (PtrFrameLayout)findViewById(R.id.bean_connection_list);
-
-        final MaterialHeader header = new MaterialHeader(getApplicationContext());
-        int[] colors = getResources().getIntArray(R.array.google_colors);
-        header.setColorSchemeColors(colors);
-        header.setLayoutParams(new PtrFrameLayout.LayoutParams(-1, -2));
-        header.setPadding(0, PtrLocalDisplay.dp2px(15), 0, PtrLocalDisplay.dp2px(10));
-        header.setPtrFrameLayout(mPtrFrameLayout);
-
-        mPtrFrameLayout.setLoadingMinTime(1000);
-        mPtrFrameLayout.setDurationToCloseHeader(1500);
-        mPtrFrameLayout.setHeaderView(header);
-        mPtrFrameLayout.addPtrUIHandler(header);
-        mPtrFrameLayout.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mPtrFrameLayout.autoRefresh(false);
-            }
-        }, 100);
-
-        mPtrFrameLayout.setPtrHandler(new PtrHandler() {
-            @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-                return true;
-            }
-
-            @Override
-            public void onRefreshBegin(final PtrFrameLayout frame) {
-                Log.d("Main", "onRefresh");
-//                if(prevListLength != beanDevices.size()){
-//                    Log.d(TAG, "diff");
-//
-//                }else{
-//                    Log.d(TAG, "diff: " + prevListLength + ", " + beanDevices.size());
-//
-//                }
-
-                frame.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        frame.refreshComplete();
-                        if(prevListLength != beanDevices.size()) {
-                            adapter.notifyDataSetChanged();
-                            prevListLength = beanDevices.size();
-                        }
-
-                    }
-                }, 0);
-//                if (mImageHasLoaded) {
-//                    long delay = (long) (1000 + Math.random() * 2000);
-//                    delay = Math.max(0, delay);
-//                    delay = 0;
-//                    frame.postDelayed(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            frame.refreshComplete();
-//                        }
-//                    }, delay);
-//                } else {
-//                    mStartLoadingTime = System.currentTimeMillis();
-//                    imageView.loadImage(imageLoader, mUrl);
-//                }
-            }
-        });
+        setContentView(R.layout.activity_main);
+        nickNameEditText = (EditText)findViewById(R.id.nickNameEditText);
+        nickNameEnterButton = (ButtonFlat)findViewById(R.id.enterNickNameButton);
+        nickNameEnterButton.setOnClickListener(mOnClickListener);
     }
 
     @Override
@@ -170,5 +81,23 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void saveNickName(){
+        nickNamePreference = getSharedPreferences(USER, -1);
+        String name = nickNameEditText.getText().toString();
+        if(name.length() > 0) {
+            nickNamePreference.edit().putString(NICK_NAME, name).commit();
+            Log.d(TAG, "name: " + nickNamePreference.getString(NICK_NAME, "null"));
+        } else{
+            Toast.makeText(getApplicationContext(),"Please enter your name!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        goToNextActivity();
+    }
+
+    private void goToNextActivity(){
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), BeanListActivity.class);
+        startActivity(intent);
+    }
 
 }
