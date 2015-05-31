@@ -1,4 +1,4 @@
-package com.example.tungying_chao.rockshare;
+package com.example.michael.rockshare;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
