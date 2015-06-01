@@ -7,7 +7,7 @@
         <item name="android:colorPrimaryDark">@color/cyan_dark</item>
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:windowBackground">@color/white</item>
-        <item name="android:textColor">@color/text_gray</item>
+        <item name="android:textColor">@color/text_grey</item>
         <!--<item name="android:statusBarColor">@color/cyan</item>-->
     </style>
 

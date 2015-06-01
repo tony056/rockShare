@@ -12,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
+import com.example.tungying_chao.utilities.BeanItemAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public class BeanListActivity extends Activity {
 //            helloText.setText("Name: " + bean.getDevice().getName().toString());
             Log.e("Bean", "Getbean");
             mBeanList.add(bean);
-            beanDevices.add(bean.getDevice().getName().toString());
+//            beanDevices.add(bean.getDevice().getName().toString());
 //            adapter.notifyDataSetChanged();
         }
 
@@ -46,30 +47,32 @@ public class BeanListActivity extends Activity {
     };
 
     private ListView mBeanListView;
-    private List<String> beanDevices = new ArrayList<String>();
+//    private List<String> beanDevices = new ArrayList<String>();
     private List<Bean> mBeanList = new ArrayList<Bean>();
-    private ArrayAdapter<String> adapter;
+//    private ArrayAdapter<String> adapter;
+    private BeanItemAdapter adapter;
     private int prevListLength = 0;
-
     public Bean bean;
     private ListView.OnItemClickListener mListViewClickListener = new ListView.OnItemClickListener(){
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
             String beanName = parent.getItemAtPosition(position).toString();
-            if(mBeanList.get(position).getDevice().getName().toString().equals(beanName)){
-                bean = mBeanList.get(position);
-                Bean backgroundBean = ((BeanConnectionApplication)getApplicationContext()).getMyBean();
-                if(backgroundBean == null){
-                    Log.e("Bean", "connecting");
-                    ((BeanConnectionApplication)getApplicationContext()).setContext(getApplicationContext());
-                    ((BeanConnectionApplication)getApplicationContext()).setMyBean(bean);
-                }
-                Intent intent = new Intent();
-                intent.setClass(getApplicationContext(), MenuActivity.class);
-                startActivity(intent);
+            Log.d(TAG, "clicked" + beanName);
+            bean = mBeanList.get(position);
+            Bean backgroundBean = ((BeanConnectionApplication)getApplicationContext()).getMyBean();
+            if(backgroundBean == null){
+                Log.e("Bean", "connecting");
+                ((BeanConnectionApplication)getApplicationContext()).setContext(getApplicationContext());
+                ((BeanConnectionApplication)getApplicationContext()).setMyBean(bean);
             }
+            Intent intent = new Intent();
+            intent.setClass(getApplicationContext(), MenuActivity.class);
+            startActivity(intent);
+
         }
+
     };
     private PtrFrameLayout mPtrFrameLayout;
 
@@ -80,10 +83,10 @@ public class BeanListActivity extends Activity {
         setContentView(R.layout.bean_connection);
         mBeanListView = (ListView)findViewById(R.id.listView);
         BeanManager.getInstance().startDiscovery(mBeanDiscoveryListener);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, beanDevices);
+//        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, beanDevices);
+        adapter = new BeanItemAdapter(this, mBeanList);
         mBeanListView.setAdapter(adapter);
         mBeanListView.setOnItemClickListener(mListViewClickListener);
-
         mPtrFrameLayout = (PtrFrameLayout)findViewById(R.id.bean_connection_list);
 
         final MaterialHeader header = new MaterialHeader(getApplicationContext());
@@ -125,9 +128,10 @@ public class BeanListActivity extends Activity {
                     @Override
                     public void run() {
                         frame.refreshComplete();
-                        if(prevListLength != beanDevices.size()) {
+                        if(prevListLength != mBeanList.size()) {
+                            Log.d(TAG, "" + prevListLength + ", " + mBeanList.size());
                             adapter.notifyDataSetChanged();
-                            prevListLength = beanDevices.size();
+                            prevListLength = mBeanList.size();
                         }
 
                     }

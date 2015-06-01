@@ -11,9 +11,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.andexert.library.RippleView;
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
+import com.gc.materialdesign.views.ButtonIcon;
+import com.gc.materialdesign.views.ButtonRectangle;
 
 import nl.littlerobots.bean.Bean;
 
@@ -24,32 +28,14 @@ import nl.littlerobots.bean.Bean;
 public class MenuActivity extends Activity {
 
     private static final String TAG = "MenuActivity";
-    private Button mBtnOn;
-    private Button mBtnOff;
-    private boolean isOn = false;
-    private Bean myBean;
-    private Button.OnClickListener tempBtnClickListener;
+    private ImageButton discoverButton;
+    private ImageButton musicButton;
+    private ImageButton aboutButton;
 
-    {
-        tempBtnClickListener = new Button.OnClickListener() {
+    private RippleView discoverRippleView;
+    private RippleView musicRippleView;
+    private RippleView aboutRippleView;
 
-            @Override
-            public void onClick(View v) {
-                if (v.getId() == R.id.ledOff) {
-                    Intent intent = new Intent();
-                    intent.setClass(getApplicationContext(), MusicListActivity.class);
-                    startActivity(intent);
-                } else {
-                    if (isOn) {
-                        myBean.setLed(0, 0, 255);
-                    } else {
-                        myBean.setLed(0, 255, 0);
-                    }
-                    isOn = !isOn;
-                }
-            }
-        };
-    }
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -79,19 +65,39 @@ public class MenuActivity extends Activity {
         }
     };
 
+    private RippleView.OnRippleCompleteListener rippleViewCompleteListener = new RippleView.OnRippleCompleteListener(){
+
+        @Override
+        public void onComplete(RippleView rippleView) {
+            Log.d(TAG, "onComplete");
+            int viewId = rippleView.getId();
+            if(viewId == R.id.discover)
+                clickDiscover(rippleView);
+            else if(viewId == R.id.listen)
+                clickMusic(rippleView);
+            else
+                clickAbout(rippleView);
+        }
+    };
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.menu_activity);
-        mBtnOn = (Button)findViewById(R.id.ledOn);
-        mBtnOff = (Button)findViewById(R.id.ledOff);
+        discoverRippleView = (RippleView)findViewById(R.id.discover);
+        musicRippleView = (RippleView)findViewById(R.id.listen);
+        aboutRippleView = (RippleView)findViewById(R.id.about);
+        discoverRippleView.setOnRippleCompleteListener(rippleViewCompleteListener);
+        musicRippleView.setOnRippleCompleteListener(rippleViewCompleteListener);
+        aboutRippleView.setOnRippleCompleteListener(rippleViewCompleteListener);
 
-        if(((BeanConnectionApplication)getApplicationContext()).getMyBean() != null){
-            myBean = ((BeanConnectionApplication)getApplicationContext()).getMyBean();
-        }
-        mBtnOn.setOnClickListener(tempBtnClickListener);
-        mBtnOff.setOnClickListener(tempBtnClickListener);
+        discoverButton = (ImageButton)findViewById(R.id.discoverButton);
+        musicButton = (ImageButton)findViewById(R.id.musicButton);
+        aboutButton = (ImageButton)findViewById(R.id.aboutButton);
+
+
     }
 
     @Override
@@ -143,6 +149,25 @@ public class MenuActivity extends Activity {
         IntentFilter mFilter = new IntentFilter(BeanConnectionApplication.TOUCH_EVENT);
         registerReceiver(mBroadcastReceiver, mFilter);
     }
+
+    public void clickDiscover(View view){
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), UserListActivity.class);
+        startActivity(intent);
+    }
+
+    public void clickMusic(View view){
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), MusicListActivity.class);
+        startActivity(intent);
+    }
+
+    public void clickAbout(View view){
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), AboutActivity.class);
+        startActivity(intent);
+    }
+
 
 
 }
