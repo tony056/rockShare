@@ -12,7 +12,8 @@
         android:layout_marginBottom="0dp"
         android:layout_weight="0.41"
         android:src="@drawable/albumlogo600x768"
-        android:id="@+id/playerBackgroundImg" />
+        android:id="@+id/playerBackgroundImg"
+        android:background="@color/player_background"/>
     <!--android:layout_weight="0.32"-->
 
     <LinearLayout
@@ -61,6 +62,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
+                android:layout_marginTop="10dp"
                 android:layout_weight="0.25"
                 android:src="@drawable/rewind"
                 android:id="@+id/reWind" />
@@ -77,7 +79,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-
+                android:layout_marginTop="10dp"
                 android:layout_weight="0.25"
                 android:src="@drawable/play"
                 android:id="@+id/playAndPause" />
@@ -93,6 +95,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
+                android:layout_marginTop="10dp"
                 android:layout_weight="0.25"
                 android:src="@drawable/fastfoward"
                 android:id="@+id/fastForward" />
@@ -100,6 +103,7 @@
             <com.andexert.library.RippleView
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
+
                 android:layout_weight="0.25"
                 ripple:rv_rippleDuration="200"
                 ripple:rv_centered="true"
@@ -107,6 +111,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
+                android:layout_marginTop="10dp"
                 android:layout_weight="0.25"
                 android:src="@drawable/volume2"
                 android:id="@+id/audioVolume" />

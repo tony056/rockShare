@@ -4,17 +4,35 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 
 /**
  * Created by tungying-chao on 6/3/15.
  */
 public class MusicPlayerActivity extends Activity {
+
+    private static final String TAG = "MusicPlayerActivity";
+
+    private ImageView playAndPauseImageView;
+    private ImageView.OnClickListener mClickListener = new ImageView.OnClickListener(){
+
+        @Override
+        public void onClick(View v) {
+            if(v.getId() == R.id.playAndPause){
+                playAndPauseImageView.setImageResource(R.drawable.pause);
+            }
+
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.music_player_activity);
 //        cmdTextView = (TextView)findViewById(R.id.);
-
+        playAndPauseImageView = (ImageView)findViewById(R.id.playAndPause);
+        playAndPauseImageView.setOnClickListener(mClickListener);
     }
 
     @Override
