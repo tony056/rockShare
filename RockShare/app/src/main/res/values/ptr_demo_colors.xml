@@ -12,4 +12,6 @@
     <color name="btn_discover">#FBBD7B</color>
     <color name="btn_music">#649E78</color>
     <color name="btn_about">#834092</color>
+    <color name="dark_grey">#2A2A2A</color>
+    <color name="player_background">#CD004A</color>
 </resources>

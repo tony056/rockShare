@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ripple="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="1">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="0dp"
+        android:layout_weight="0.41"
+        android:src="@drawable/albumlogo600x768"
+        android:id="@+id/playerBackgroundImg" />
+    <!--android:layout_weight="0.32"-->
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="0dp"
+        android:paddingTop="0dp"
+        android:background="@color/player_background">
+        <!--android:layout_weight="0.68"-->
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="64dp"
+            android:text="Cool"
+            android:textColor="@color/white"
+            android:id="@+id/playerSongName" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Unknown"
+            android:textSize="24dp"
+            android:textColor="@color/white"
+            android:id="@+id/playerAuthorName" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="20dp"
+            >
+        <com.andexert.library.RippleView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_weight="0.25"
+            ripple:rv_rippleDuration="200"
+            ripple:rv_centered="true"
+            >
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_weight="0.25"
+                android:src="@drawable/rewind"
+                android:id="@+id/reWind" />
+        </com.andexert.library.RippleView>
+
+            <com.andexert.library.RippleView
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_weight="0.25"
+                ripple:rv_rippleDuration="200"
+                ripple:rv_centered="true"
+                >
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+
+                android:layout_weight="0.25"
+                android:src="@drawable/play"
+                android:id="@+id/playAndPause" />
+            </com.andexert.library.RippleView>
+            <com.andexert.library.RippleView
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_weight="0.25"
+                ripple:rv_rippleDuration="200"
+                ripple:rv_centered="true"
+                >
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_weight="0.25"
+                android:src="@drawable/fastfoward"
+                android:id="@+id/fastForward" />
+            </com.andexert.library.RippleView>
+            <com.andexert.library.RippleView
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_weight="0.25"
+                ripple:rv_rippleDuration="200"
+                ripple:rv_centered="true"
+                >
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_weight="0.25"
+                android:src="@drawable/volume2"
+                android:id="@+id/audioVolume" />
+            </com.andexert.library.RippleView>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

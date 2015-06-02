@@ -8,16 +8,31 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
+
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
+import com.example.tungying_chao.utilities.MusicItemAdapter;
 
 /**
  * Created by tungying-chao on 5/30/15.
  */
 public class MusicListActivity extends Activity {
-    private TextView cmdTextView;
+    private ListView musicListView;
+    private MusicItemAdapter adapter;
+
+    private ListView.OnItemClickListener mClickListener = new ListView.OnItemClickListener(){
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            tempClick();
+        }
+
+
+    };
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -44,7 +59,7 @@ public class MusicListActivity extends Activity {
                 if(event.length() == 0)
                     return;
 //                Toast.makeText(getApplicationContext(), event, Toast.LENGTH_SHORT).show();
-                cmdTextView.setText(event);
+//                cmdTextView.setText(event);
             }
         }
     };
@@ -53,7 +68,11 @@ public class MusicListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.music_list_activity);
-        cmdTextView = (TextView)findViewById(R.id.commandTextView);
+//        cmdTextView = (TextView)findViewById(R.id.);
+        musicListView = (ListView)findViewById(R.id.musicListView);
+        adapter = new MusicItemAdapter(getApplicationContext());
+        musicListView.setAdapter(adapter);
+        musicListView.setOnItemClickListener(mClickListener);
     }
 
     @Override
@@ -92,6 +111,12 @@ public class MusicListActivity extends Activity {
     private void registerReceiverForBeanTouchEvent(){
         IntentFilter mFilter = new IntentFilter(BeanConnectionApplication.TOUCH_EVENT);
         registerReceiver(mBroadcastReceiver, mFilter);
+    }
+
+    private void tempClick(){
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), MusicPlayerActivity.class);
+        startActivity(intent);
     }
 
 }
