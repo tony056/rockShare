@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
 import com.example.tungying_chao.utilities.MusicItemAdapter;
+import com.parse.ParseObject;
 
 /**
  * Created by tungying-chao on 5/30/15.
@@ -73,6 +74,9 @@ public class MusicListActivity extends Activity {
         adapter = new MusicItemAdapter(getApplicationContext());
         musicListView.setAdapter(adapter);
         musicListView.setOnItemClickListener(mClickListener);
+//        ParseObject rockShareObject = new ParseObject("TestObject");
+//        rockShareObject.put("foo", "bar");
+//        rockShareObject.saveInBackground();
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.example.tungying_chao.rockshare;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -17,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
 import com.gc.materialdesign.views.ButtonFlat;
+import com.parse.ParseObject;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 import java.util.ArrayList;
@@ -35,6 +38,7 @@ public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
     private static final String USER = "USER";
     private static final String NICK_NAME = "NICK_NAME";
+
 
 
     private EditText nickNameEditText;
@@ -57,6 +61,11 @@ public class MainActivity extends Activity {
         nickNameEditText = (EditText)findViewById(R.id.nickNameEditText);
         nickNameEnterButton = (ButtonFlat)findViewById(R.id.enterNickNameButton);
         nickNameEnterButton.setOnClickListener(mOnClickListener);
+        if(((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler() != null){
+            WifiManager manager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
+            String wifiName = manager.getConnectionInfo().getSSID();
+                    ((BeanConnectionApplication) getApplicationContext()).getRockShareServerHandler().setWifiName(wifiName);
+        }
     }
 
     @Override
@@ -91,6 +100,7 @@ public class MainActivity extends Activity {
             Toast.makeText(getApplicationContext(),"Please enter your name!", Toast.LENGTH_SHORT).show();
             return;
         }
+        sendInfoToParse(name);
         goToNextActivity();
     }
 
@@ -98,6 +108,10 @@ public class MainActivity extends Activity {
         Intent intent = new Intent();
         intent.setClass(getApplicationContext(), BeanListActivity.class);
         startActivity(intent);
+    }
+
+    private void sendInfoToParse(String name){
+        ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler().initNewData(name);
     }
 
 }

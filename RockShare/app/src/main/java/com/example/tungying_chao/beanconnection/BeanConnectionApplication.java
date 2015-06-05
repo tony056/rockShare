@@ -3,8 +3,12 @@ package com.example.tungying_chao.beanconnection;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.os.StrictMode;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.example.tungying_chao.utilities.RockShareServerHandler;
+import com.parse.Parse;
 
 import nl.littlerobots.bean.Bean;
 import nl.littlerobots.bean.BeanListener;
@@ -19,6 +23,7 @@ public class BeanConnectionApplication extends Application {
 
     private Bean myBean;
     private Context context;
+    private RockShareServerHandler rockShareServerHandler;
     private BeanListener myBeanListener = new BeanListener() {
         @Override
         public void onConnected() {
@@ -60,6 +65,12 @@ public class BeanConnectionApplication extends Application {
     @Override
     public void onCreate(){
         super.onCreate();
+        // Enable Local Datastore.
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        Parse.enableLocalDatastore(getApplicationContext());
+        Parse.initialize(getApplicationContext(), "vPrTWP92aurD2s7K2f83wg0PZ6h49KtJ9Z68fzBQ", "ibTJC42hUleivVSORiEVRqG6ruX5qzgAOg1MjClK");
+        rockShareServerHandler = new RockShareServerHandler(this.context);
         Log.d(TAG, "onCreate()");
     }
 
@@ -104,6 +115,14 @@ public class BeanConnectionApplication extends Application {
         Intent intent = new Intent(TOUCH_EVENT);
         intent.putExtra(EVENT, value);
         sendBroadcast(intent);
+    }
+
+    public RockShareServerHandler getRockShareServerHandler() {
+        return rockShareServerHandler;
+    }
+
+    public void setRockShareServerHandler(RockShareServerHandler rockShareServerHandler) {
+        this.rockShareServerHandler = rockShareServerHandler;
     }
 
 }

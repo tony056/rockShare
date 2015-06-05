@@ -175,4 +175,6 @@ public class BeanListActivity extends Activity {
 
         return super.onOptionsItemSelected(item);
     }
+
+
 }
