@@ -1,5 +1,6 @@
 package com.example.tungying_chao.utilities;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -7,16 +8,28 @@ import java.util.Date;
  * Created by tungying-chao on 6/3/15.
  */
 public class SongInfo {
+
+
+    private String path = "";
     private String name = "";
     private String author = "";
     private long duration = 0;
     private String album = "";
+//    private File file;
 
     public SongInfo(String name, String author, long duration, String album){
         this.name = name;
         this.author = author;
         this.duration = duration;
         this.album = album;
+    }
+
+    public SongInfo(String name, String author, long duration, String album, String path) {
+        this.name = name;
+        this.author = author;
+        this.duration = duration;
+        this.album = album;
+        this.path = path;
     }
 
     public String getName() {
@@ -61,5 +74,13 @@ public class SongInfo {
 
     public void setAlbum(String album) {
         this.album = album;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 }

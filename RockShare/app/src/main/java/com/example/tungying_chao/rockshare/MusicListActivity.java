@@ -29,11 +29,19 @@ public class MusicListActivity extends Activity {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            tempClick();
+//            tempClick();
+            goToPlayer(position);
         }
 
 
     };
+
+    private void goToPlayer(int position) {
+        Intent intent = new Intent(this, MusicPlayerActivity.class);
+        intent.putExtra("index", position);
+        setResult(100, intent);
+        startActivity(intent);
+    }
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override

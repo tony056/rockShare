@@ -26,29 +26,15 @@ public class MusicItemAdapter extends BaseAdapter {
 
 
     private Context context;
-    private String[] songInfoColumn = new String[] {
-            MediaStore.Audio.AudioColumns.TITLE,
-            MediaStore.Audio.AudioColumns.ALBUM,
-            MediaStore.Audio.AudioColumns.DURATION,
-            MediaStore.Audio.AudioColumns.ARTIST
-    };
-    private Uri contentURi = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-    private Cursor mCursor;
-    private int titleIndex;
-    private int authorIndex;
-    private int albumIndex;
-    private int durationIndex;
+
+
     private List<SongInfo> songInfoList = new ArrayList<SongInfo>();
 
     public MusicItemAdapter(Context context){
         mLayoutInflater = LayoutInflater.from(context);
         this.context = context;
-        mCursor = context.getContentResolver().query(contentURi, songInfoColumn, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
-        titleIndex = mCursor.getColumnIndexOrThrow(songInfoColumn[0]);
-        albumIndex = mCursor.getColumnIndexOrThrow(songInfoColumn[1]);
-        durationIndex = mCursor.getColumnIndexOrThrow(songInfoColumn[2]);
-        authorIndex = mCursor.getColumnIndexOrThrow(songInfoColumn[3]);
-        getMp3FilesInfo();
+        SongManager songManager = new SongManager(this.context);
+        songInfoList = songManager.getSongsList();
     }
 
     @Override
@@ -89,19 +75,5 @@ public class MusicItemAdapter extends BaseAdapter {
         return convertView;
     }
 
-    private void getMp3FilesInfo(){
-        Log.d(TAG, "" + mCursor.getCount());
-        if(mCursor.getCount() > 0){
-            while(mCursor.moveToNext()){
-                Log.d(TAG, "" + mCursor.getPosition());
-                String title = mCursor.getString(titleIndex);
-                String author = mCursor.getString(authorIndex);
-                long duration = mCursor.getLong(durationIndex);
-                String album = mCursor.getString(albumIndex);
-                SongInfo info = new SongInfo(title, author, duration, album);
-                songInfoList.add(info);
-            }
-            mCursor.close();
-        }
-    }
+
 }

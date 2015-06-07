@@ -1,7 +1,13 @@
 package com.example.tungying_chao.utilities;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Environment;
 import android.util.Log;
+
+import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
+import com.parse.ParseInstallation;
+import com.parse.ParseUser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,8 +23,15 @@ import fi.iki.elonen.NanoHTTPD;
  * Created by tungying-chao on 6/7/15.
  */
 public class MyHttpd extends NanoHTTPD {
-    public MyHttpd(int port) {
+    private static final String MEDIA_STATE = "mediaState";
+    private static final String SONG = "song";
+    private static final String OFFSET = "offset";
+
+    private Context context;
+
+    public MyHttpd(int port, Context context) {
         super(port);
+        this.context = context;
         getLocalIPAddress();
     }
 
@@ -39,7 +52,8 @@ public class MyHttpd extends NanoHTTPD {
             }
             Log.d("fileList", str);
             Log.d("http", Environment.getExternalStorageDirectory().toString());
-            file = new FileInputStream(Environment.getExternalStorageDirectory()+"/Cool.mp3");
+//            file = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + getCurrentMusic());
+            file = new FileInputStream(Environment.getExternalStorageDirectory() + "/Cool.mp3");
         }catch (FileNotFoundException e){
             e.printStackTrace();
         }
@@ -56,7 +70,8 @@ public class MyHttpd extends NanoHTTPD {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (!inetAddress.isLoopbackAddress()) {
                         ip= inetAddress.getAddress();
-                        ipName = inetAddress.getHostName();
+                        ipName = inetAddress.getHostAddress();
+
                     }
                 }
             }
@@ -66,6 +81,22 @@ public class MyHttpd extends NanoHTTPD {
         Log.d("IP", ipName);
         return ip;
 
+    }
+
+    private String getCurrentMusic(){
+        if(this.context == null){
+            Log.d("HTTP", "No context");
+            return "";
+        }
+        SharedPreferences sharedPreferences = this.context.getSharedPreferences(MEDIA_STATE, 0);
+        if(sharedPreferences != null){
+            String songName = sharedPreferences.getString(SONG, "Cool.mp3");
+            String offset = sharedPreferences.getString(OFFSET, "0");
+            int intOffset = Integer.parseInt(offset);
+            ((BeanConnectionApplication) this.context).getRockShareServerHandler().updateOffset(intOffset);
+            return songName;
+        }
+        return "";
     }
 
 }

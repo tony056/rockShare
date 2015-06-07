@@ -149,6 +149,7 @@ public class BeanConnectionApplication extends Application {
                 }
             }
         });
+        httpServerInit();
         Log.d(TAG, "onCreate()");
 //        myPubNub.publish(CHANNEL, pubNubDataManager.getCurrentToken(), publishCallback);
     }
@@ -295,7 +296,7 @@ public class BeanConnectionApplication extends Application {
     }
 
     private void httpServerInit(){
-        MyHttpd httpdServer = new MyHttpd(5566);
+        MyHttpd httpdServer = new MyHttpd(5566, getApplicationContext());
         try {
             httpdServer.start();
         } catch (IOException e) {
