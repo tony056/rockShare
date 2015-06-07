@@ -7,8 +7,25 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.tungying_chao.utilities.MyHttpd;
+import com.example.tungying_chao.utilities.PubNubDataManager;
 import com.example.tungying_chao.utilities.RockShareServerHandler;
 import com.parse.Parse;
+import com.parse.ParseException;
+import com.parse.ParseInstallation;
+import com.parse.ParsePush;
+import com.parse.SaveCallback;
+import com.pubnub.api.Callback;
+import com.pubnub.api.Pubnub;
+import com.pubnub.api.PubnubError;
+import com.pubnub.api.PubnubException;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import nl.littlerobots.bean.Bean;
 import nl.littlerobots.bean.BeanListener;
@@ -19,11 +36,56 @@ import nl.littlerobots.bean.BeanListener;
 public class BeanConnectionApplication extends Application {
     private static final String TAG = "BeanConnection";
     public static final String TOUCH_EVENT = "BEAN_TOUCH_EVENT";
+    public static final String SHARE_EVENT = "SHARE_EVENT";
     public static final String EVENT = "EVENT";
+    private static final String CHANNEL = "rock_share";
+    private static final String NAME = "name";
+    private static final String URL = "url";
+    private static final String WIFI = "wifiName";
+    private static final String SONG = "song";
+    private static final String STATE = "state";
+    private static final String ACCEPT_STATE = "accept_state";
+    private static final String OFFSET = "offset";
+    private static final String DEFAULT_PORT = "5566";
 
     private Bean myBean;
     private Context context;
+
+
+    private PubNubDataManager pubNubDataManager;
     private RockShareServerHandler rockShareServerHandler;
+    private List<JSONObject> pubNubTokenLists = new ArrayList<JSONObject>();
+    private Pubnub myPubNub = new Pubnub("pub-c-9ff0b4eb-292b-46a0-bf5d-90b79ed90768", "sub-c-42c5f87e-0972-11e5-9ffb-0619f8945a4f");
+
+    private Callback publishCallback = new Callback() {
+        @Override
+        public void successCallback(String channel, Object message) {
+            super.successCallback(channel, message);
+            Log.d(TAG, "good");
+        }
+
+        @Override
+        public void errorCallback(String channel, PubnubError error) {
+            super.errorCallback(channel, error);
+        }
+
+        @Override
+        public void connectCallback(String channel, Object message) {
+            super.connectCallback(channel, message);
+        }
+
+        @Override
+        public void reconnectCallback(String channel, Object message) {
+            super.reconnectCallback(channel, message);
+        }
+
+        @Override
+        public void disconnectCallback(String channel, Object message) {
+            super.disconnectCallback(channel, message);
+        }
+    };
+
+
     private BeanListener myBeanListener = new BeanListener() {
         @Override
         public void onConnected() {
@@ -62,16 +124,33 @@ public class BeanConnectionApplication extends Application {
     };
 
 
+
     @Override
     public void onCreate(){
         super.onCreate();
         // Enable Local Datastore.
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        Parse.enableLocalDatastore(getApplicationContext());
-        Parse.initialize(getApplicationContext(), "vPrTWP92aurD2s7K2f83wg0PZ6h49KtJ9Z68fzBQ", "ibTJC42hUleivVSORiEVRqG6ruX5qzgAOg1MjClK");
+        pubNubDataManager = new PubNubDataManager();
+        parseInit();
         rockShareServerHandler = new RockShareServerHandler(this.context);
+//        try {
+//            myPubNub.subscribe(CHANNEL, subscribeCallback);
+//        } catch (PubnubException e) {
+//            e.printStackTrace();
+//        }
+        ParsePush.subscribeInBackground("", new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e == null) {
+                    Log.d("com.parse.push", "successfully subscribed to the broadcast channel.");
+                } else {
+                    Log.e("com.parse.push", "failed to subscribe for push", e);
+                }
+            }
+        });
         Log.d(TAG, "onCreate()");
+//        myPubNub.publish(CHANNEL, pubNubDataManager.getCurrentToken(), publishCallback);
     }
 
 
@@ -117,12 +196,115 @@ public class BeanConnectionApplication extends Application {
         sendBroadcast(intent);
     }
 
+    private void sendStartToStreamInfo(JSONObject object) {
+        JSONObject infoObject = object;
+        try {
+            if(infoObject != null) {
+                int event_state = infoObject.getInt("EVENT_STATE");
+//                if(event_state == 0) { // idle
+                    String url = "http://" + infoObject.getString(URL);
+                    String songName = infoObject.getString(SONG);
+                    Intent intent = new Intent(SHARE_EVENT);
+                    intent.putExtra("EVENT_STATE", event_state);
+                    intent.putExtra(URL, url);
+                    intent.putExtra(SONG, songName);
+//                }else if(event_state == 2) //someone ask to share
+                sendBroadcast(intent);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public RockShareServerHandler getRockShareServerHandler() {
         return rockShareServerHandler;
     }
 
     public void setRockShareServerHandler(RockShareServerHandler rockShareServerHandler) {
         this.rockShareServerHandler = rockShareServerHandler;
+    }
+
+    private Callback subscribeCallback = new Callback() {
+        @Override
+        public void successCallback(String channel, Object message) {
+//            super.successCallback(channel, message);
+            if(channel.equals(CHANNEL)){
+//                JSONObject jsonObject =  pubNubDataManager.decodeToken(message.toString());
+
+//                sendStartToStreamInfo(jsonObject);
+            }
+        }
+
+        @Override
+        public void errorCallback(String channel, PubnubError error) {
+            super.errorCallback(channel, error);
+        }
+
+        @Override
+        public void connectCallback(String channel, Object message) {
+            super.connectCallback(channel, message);
+        }
+
+        @Override
+        public void reconnectCallback(String channel, Object message) {
+            super.reconnectCallback(channel, message);
+        }
+
+        @Override
+        public void disconnectCallback(String channel, Object message) {
+            super.disconnectCallback(channel, message);
+        }
+    };
+
+    public PubNubDataManager getPubNubDataManager() {
+        return pubNubDataManager;
+    }
+
+    public void broadcastToken(){
+        myPubNub.publish(CHANNEL, pubNubDataManager.getCurrentToken(), publishCallback);
+    }
+
+    private void decodeToken(String info){
+        boolean isExist = false;
+        try {
+            JSONObject token = new JSONObject(info);
+            for(JSONObject object : pubNubTokenLists){
+                if(object.getString(URL).equals(token.getString(URL))){
+                    if(object.getString(STATE) == token.getString(STATE)){
+                        isExist = true;
+                    }else {
+                        pubNubTokenLists.remove(object);
+                    }
+                }
+            }
+            if(!isExist){
+                pubNubTokenLists.add(token);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public List<JSONObject> getPubNubTokenLists() {
+        return pubNubTokenLists;
+    }
+
+    private void parseInit(){
+        Parse.enableLocalDatastore(this);
+        Parse.initialize(this, "vPrTWP92aurD2s7K2f83wg0PZ6h49KtJ9Z68fzBQ", "ibTJC42hUleivVSORiEVRqG6ruX5qzgAOg1MjClK");
+    }
+
+    private void httpServerInit(){
+        MyHttpd httpdServer = new MyHttpd(5566);
+        try {
+            httpdServer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public ParseInstallation getParseInstallation() {
+        return ParseInstallation.getCurrentInstallation();
     }
 
 }

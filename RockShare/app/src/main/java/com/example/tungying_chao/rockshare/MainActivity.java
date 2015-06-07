@@ -18,7 +18,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
+import com.example.tungying_chao.utilities.PubNubDataManager;
+import com.example.tungying_chao.utilities.RockShareServerHandler;
 import com.gc.materialdesign.views.ButtonFlat;
+import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
@@ -52,7 +55,7 @@ public class MainActivity extends Activity {
             saveNickName();
         }
     };
-
+    private RockShareServerHandler rockShareServerHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,11 +64,7 @@ public class MainActivity extends Activity {
         nickNameEditText = (EditText)findViewById(R.id.nickNameEditText);
         nickNameEnterButton = (ButtonFlat)findViewById(R.id.enterNickNameButton);
         nickNameEnterButton.setOnClickListener(mOnClickListener);
-        if(((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler() != null){
-            WifiManager manager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
-            String wifiName = manager.getConnectionInfo().getSSID();
-                    ((BeanConnectionApplication) getApplicationContext()).getRockShareServerHandler().setWifiName(wifiName);
-        }
+        rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
     }
 
     @Override
@@ -100,8 +99,27 @@ public class MainActivity extends Activity {
             Toast.makeText(getApplicationContext(),"Please enter your name!", Toast.LENGTH_SHORT).show();
             return;
         }
-        sendInfoToParse(name);
+        initParseInstallation(name);
         goToNextActivity();
+    }
+
+    private void initParseInstallation(String name) {
+        if (rockShareServerHandler == null){
+            Log.d(TAG, "null handler");
+            return;
+        }
+        setWifiName();
+        rockShareServerHandler.initNewData(name);
+
+    }
+
+    private void setTokenName(String name) {
+        PubNubDataManager pubNubDataManager = ((BeanConnectionApplication)getApplicationContext()).getPubNubDataManager();
+        if(pubNubDataManager != null){
+            pubNubDataManager.setUsername(name);
+        }else {
+            Log.d(TAG, "null pointer");
+        }
     }
 
     private void goToNextActivity(){
@@ -110,8 +128,14 @@ public class MainActivity extends Activity {
         startActivity(intent);
     }
 
-    private void sendInfoToParse(String name){
-        ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler().initNewData(name);
+    private void setWifiName(){
+        WifiManager manager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
+        String wifiName = manager.getConnectionInfo().getSSID();
+        rockShareServerHandler.setWifiName(wifiName);
     }
+
+//    private void sendInfoToParse(String name){
+//        ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler().initNewData(name);
+//    }
 
 }

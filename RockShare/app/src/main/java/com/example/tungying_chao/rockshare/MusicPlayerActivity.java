@@ -30,7 +30,6 @@ public class MusicPlayerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.music_player_activity);
-//        cmdTextView = (TextView)findViewById(R.id.);
         playAndPauseImageView = (ImageView)findViewById(R.id.playAndPause);
         playAndPauseImageView.setOnClickListener(mClickListener);
     }

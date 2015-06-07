@@ -8,7 +8,15 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <permission android:protectionLevel="signature"
+        android:name="com.example.tungying_chao.rockshare.permission.C2D_MESSAGE" />
+    <uses-permission android:name="com.example.tungying_chao.rockshare.permission.C2D_MESSAGE" />
     <application
         android:name="com.example.tungying_chao.beanconnection.BeanConnectionApplication"
         android:allowBackup="true"
@@ -18,25 +26,73 @@
         <activity
             android:name="com.example.tungying_chao.rockshare.MainActivity"
             android:label="@string/app_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+                <!--<category android:name="android.intent.category.LAUNCHER" />-->
+            <!--</intent-filter>-->
         </activity>
         <activity
-            android:name="com.example.tungying_chao.rockshare.MenuActivity" />
-        <activity android:name="com.example.tungying_chao.rockshare.MusicListActivity">
+            android:name="com.example.tungying_chao.rockshare.MenuActivity" >
             <!--<intent-filter>-->
-            <!--<action android:name="android.intent.action.MAIN" />-->
-
-            <!--<category android:name="android.intent.category.LAUNCHER" />-->
+                <!--<action android:name="android.intent.action.VIEW" />-->
+                <!--<category android:name="android.intent.category.DEFAULT" />-->
+                <!--<category android:name="android.intent.category.BROWSABLE"/>-->
+                <!--<data android:scheme="myapp" android:host="host" android:path="/path" />-->
             <!--</intent-filter>-->
+        </activity>
+        <activity android:name="com.example.tungying_chao.rockshare.MusicListActivity">
+            <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity android:name="com.example.tungying_chao.rockshare.BeanListActivity" />
         <activity android:name="com.example.tungying_chao.rockshare.UserListActivity"/>
         <activity android:name="com.example.tungying_chao.rockshare.AboutActivity"/>
         <activity android:name="com.example.tungying_chao.rockshare.MusicPlayerActivity"/>
+        <activity android:name="com.example.tungying_chao.rockshare.CheckActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="myapp" android:host="host" android:path="/path" />
+            </intent-filter>
+        </activity>
+        <service android:name="com.parse.PushService" />
+        <receiver android:name="com.parse.ParseBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.parse.GcmBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND">
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+
+                <!--
+                  IMPORTANT: Change "com.parse.tutorials.pushnotifications" to match your app's package name.
+                -->
+                <category android:name="com.example.tungying_chao.rockshare" />
+            </intent-filter>
+        </receiver>
+        <!--<receiver android:name="com.example.tungying_chao.utilities.RockSharePushBroadcastReceiver">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.BOOT_COMPLETED" />-->
+                <!--<action android:name="android.intent.action.USER_PRESENT" />-->
+                <!--<action android:name="com.example.tungying_chao.rockshare.NEW_NOTIF"/>-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
+        <receiver android:name="com.parse.ParsePushBroadcastReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="com.parse.push.intent.RECEIVE" />
+                <action android:name="com.parse.push.intent.DELETE" />
+                <action android:name="com.parse.push.intent.OPEN" />
+            </intent-filter>
+        </receiver>
 
     </application>
     <!--<application

@@ -13,6 +13,7 @@ import android.widget.ListView;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
 import com.example.tungying_chao.utilities.BeanItemAdapter;
+import com.example.tungying_chao.utilities.PubNubDataManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +85,7 @@ public class BeanListActivity extends Activity {
         mBeanListView = (ListView)findViewById(R.id.listView);
         BeanManager.getInstance().startDiscovery(mBeanDiscoveryListener);
 //        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, beanDevices);
+        ((BeanConnectionApplication)getApplicationContext()).broadcastToken();
         adapter = new BeanItemAdapter(this, mBeanList);
         mBeanListView.setAdapter(adapter);
         mBeanListView.setOnItemClickListener(mListViewClickListener);

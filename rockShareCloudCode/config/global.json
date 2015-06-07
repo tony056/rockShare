@@ -1,0 +1,14 @@
+{
+  "global": {
+    "parseVersion": "1.4.2"
+  },
+  "applications": {
+    "RockShare": {
+      "applicationId": "vPrTWP92aurD2s7K2f83wg0PZ6h49KtJ9Z68fzBQ",
+      "masterKey": "3wsA2rKpsZBCKuZkvwY6qXcEFJ4fBxYpfsoKqeo3"
+    },
+    "_default": {
+      "link": "RockShare"
+    }
+  }
+}
