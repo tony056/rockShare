@@ -32,6 +32,10 @@ import java.util.List;
 public class RockShareServerHandler {
     private static final String TAG = "RockShareServerHandler";
 
+    public String getUsername() {
+        return username;
+    }
+
     private String username = "";
     private String wifiName = "";
     private String url = "";
@@ -79,7 +83,8 @@ public class RockShareServerHandler {
             public void done(ParseException e) {
                 Log.d(TAG, "signed up");
                 initInstallation();
-
+                if(e != null)
+                    e.printStackTrace();
             }
         });
 
@@ -106,7 +111,7 @@ public class RockShareServerHandler {
                 for(Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();){
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if(!inetAddress.isLoopbackAddress()){
-                        returnUrl = inetAddress.getHostName();
+                        returnUrl = inetAddress.getHostAddress();
                     }
                 }
             }

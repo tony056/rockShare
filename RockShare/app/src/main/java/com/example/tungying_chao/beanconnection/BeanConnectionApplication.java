@@ -55,6 +55,15 @@ public class BeanConnectionApplication extends Application {
     private PubNubDataManager pubNubDataManager;
     private RockShareServerHandler rockShareServerHandler;
     private List<JSONObject> pubNubTokenLists = new ArrayList<JSONObject>();
+
+    public Pubnub getMyPubNub() {
+        return myPubNub;
+    }
+
+    public void setMyPubNub(Pubnub myPubNub) {
+        this.myPubNub = myPubNub;
+    }
+
     private Pubnub myPubNub = new Pubnub("pub-c-9ff0b4eb-292b-46a0-bf5d-90b79ed90768", "sub-c-42c5f87e-0972-11e5-9ffb-0619f8945a4f");
 
     private Callback publishCallback = new Callback() {

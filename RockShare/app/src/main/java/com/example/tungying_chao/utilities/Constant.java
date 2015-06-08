@@ -16,4 +16,7 @@ public class Constant {
     public static final String ACCEPT_STATE = "accept_state";
     public static final String OFFSET = "offset";
     public static final String DEFAULT_PORT = "5566";
+    public static final long[] pattern_two = {0, 200, 500, 0, 200, 500};
+    public static final long[] pattern_three = {0, 200, 500, 0, 200, 500, 0, 200, 500};
+    public static final long[] pattern_four = {0, 200, 500, 0, 200, 500, 0, 200, 500, 0, 200, 500};
 }

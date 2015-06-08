@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -30,6 +31,10 @@ import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
+import com.pubnub.api.Callback;
+import com.pubnub.api.Pubnub;
+import com.pubnub.api.PubnubError;
 
 
 import java.io.IOException;
@@ -95,24 +100,26 @@ public class MusicPlayerActivity extends Activity {
 //            String event = "";
             if(intent.hasExtra(BeanConnectionApplication.EVENT)){
                 int cmd = intent.getIntExtra(BeanConnectionApplication.EVENT, 0);
+                Log.d(TAG, "cmd: " + cmd);
                 switch (cmd){
                     case 1:
 //                        "Single Click";
 //                        rockShareServerHandler.updateState(1);
+                        stopPlayerAndSave();
                         updateStateOnParse(1);
                         break;
                     case 2:
-                        vibrateNotification(2);
+//                        vibrateNotification(2);
                         checkWhoIsSharing(2);
 //                        "Double Click";
                         break;
                     case 3:
-                        vibrateNotification(3);
+//                        vibrateNotification(3);
                         checkWhoIsSharing(3);
 //                        "Triple Click";
                         break;
                     case -1:
-                        vibrateNotification(-1);
+//                        vibrateNotification(-1);
                         checkWhoIsSharing(-1);
 //                        "Long Click";
                         break;
@@ -126,6 +133,12 @@ public class MusicPlayerActivity extends Activity {
         }
     };
 
+    private void stopPlayerAndSave() {
+        mediaPlayer.pause();
+        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
+        sharedPreferences.edit().putString(Constant.SONG, list.get(songIndex).getName())
+                .putInt(Constant.OFFSET, mediaPlayer.getCurrentPosition()).commit();
+    }
 
 
     private void openDialog() {
@@ -165,6 +178,7 @@ public class MusicPlayerActivity extends Activity {
     @Override
     public void onPause(){
         super.onPause();
+        unregisterReceiver(broadcastReceiver);
         SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
         sharedPreferences.edit().putString(Constant.SONG, list.get(songIndex).getName())
                 .putInt(Constant.OFFSET, mediaPlayer.getCurrentPosition()).commit();
@@ -183,6 +197,8 @@ public class MusicPlayerActivity extends Activity {
     public void onResume(){
         Log.d(TAG, "onResume");
         super.onResume();
+        IntentFilter mFilter = new IntentFilter(BeanConnectionApplication.TOUCH_EVENT);
+        registerReceiver(broadcastReceiver, mFilter);
         if(mediaPlayer == null){
             mediaPlayer = new MediaPlayer();
         }else {
@@ -318,18 +334,19 @@ public class MusicPlayerActivity extends Activity {
             @Override
             public void done(List<ParseUser> list, ParseException e) {
                 if (e == null) {
-                    if (list.size() == 1) {
+                    if (list.size() == 1 && list.get(0) != ParseUser.getCurrentUser()) {
                         Log.d(TAG, "update from parse");
                         updateInfoByParse(list.get(0).getString(Constant.SONG));
                         updateMusic(list.get(0).getString(Constant.URL));
                     } else {
-                        Log.d(TAG, "parse list size");
+                        Log.d(TAG, "parse list size is not correct.");
                     }
                 } else {
                     e.printStackTrace();
                 }
             }
         });
+        updateStateOnParse(state);
     }
 
     private void updateMusic(String url){
@@ -356,20 +373,40 @@ public class MusicPlayerActivity extends Activity {
 
     private void vibrateNotification(int times){
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        long[] pattern = {0, 200, 500};
-        if(times > 0)
-            vibrator.vibrate(pattern, times - 1);
-        else
-            vibrator.vibrate(pattern, 3);
+        switch (times){
+            case 2:
+                vibrator.vibrate(Constant.pattern_two, -1);
+                break;
+            case 3:
+                vibrator.vibrate(Constant.pattern_three, -1);
+                break;
+            case -1:
+                vibrator.vibrate(Constant.pattern_four, -1);
+                break;
+            default:
+                Log.d(TAG, "error vibrator argument");
+                break;
+        }
+
     }
 
     private void updateStateOnParse(int i) {
         ParseUser user = ParseUser.getCurrentUser();
         user.put(Constant.SONG, list.get(songIndex).getName());
-//        user.put(Constant.STATE, i);
-        if(i == 1)
-            user.put(Constant.ACCEPT_STATE, randomAcceptState());
-        user.signUpInBackground();
+        final int randomNumber = randomAcceptState();
+        if(i == 1) {
+            user.put(Constant.ACCEPT_STATE, randomNumber);
+            user.put(Constant.OFFSET, mediaPlayer.getCurrentPosition());
+            startPubNubChannel();
+        }
+        user.put(Constant.STATE, i);
+        user.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                Log.d(TAG, "saved");
+                vibrateNotification(randomNumber);
+            }
+        });
     }
 
     private int randomAcceptState() {
@@ -377,5 +414,26 @@ public class MusicPlayerActivity extends Activity {
         if(num == 1)
             return -1;
         return num;
+    }
+
+    private void startPubNubChannel(){
+        Pubnub pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
+        pubnub.publish(ParseUser.getCurrentUser().getUsername(), "Open the channel", new Callback() {
+            @Override
+            public void successCallback(String channel, Object message) {
+//                super.successCallback(channel, message);
+                Log.d(TAG, "pubnub publish good");
+            }
+
+            @Override
+            public void errorCallback(String channel, PubnubError error) {
+                super.errorCallback(channel, error);
+            }
+
+            @Override
+            public void disconnectCallback(String channel, Object message) {
+                super.disconnectCallback(channel, message);
+            }
+        });
     }
 }
