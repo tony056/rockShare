@@ -172,5 +172,24 @@ public class RockShareServerHandler {
         }
     }
 
+//    public void checkWhoIsSharing(int state){
+//        ParseQuery<ParseUser> query = new ParseQuery<ParseUser>();
+//        query.whereEqualTo(Constant.ACCEPT_STATE, state);
+//        query.findInBackground(new FindCallback<ParseUser>() {
+//            @Override
+//            public void done(List<ParseUser> list, ParseException e) {
+//                if(e == null){
+//                    if(list.size() == 1) {
+//                        String url = list.get(0).getString(Constant.URL);
+//
+//                    }
+//                }else{
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//
+//    }
+
 
 }

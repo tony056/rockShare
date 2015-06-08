@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="64dp"
+            android:textSize="54dp"
             android:text="Cool"
             android:textColor="@color/white"
             android:id="@+id/playerSongName" />

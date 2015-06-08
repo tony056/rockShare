@@ -2,11 +2,14 @@ package com.example.tungying_chao.rockshare;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,12 +18,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
 import com.example.tungying_chao.utilities.Constant;
 import com.example.tungying_chao.utilities.MusicItemAdapter;
+import com.example.tungying_chao.utilities.RockShareServerHandler;
 import com.example.tungying_chao.utilities.SongInfo;
 import com.example.tungying_chao.utilities.SongManager;
 import com.gc.materialdesign.views.ButtonFlat;
 import com.gc.materialdesign.views.Slider;
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
 
 
 import java.io.IOException;
@@ -39,6 +48,7 @@ public class MusicPlayerActivity extends Activity {
     private boolean isPlaying = true;
     private int songIndex = 0;
     private AudioManager audioManager;
+    private RockShareServerHandler rockShareServerHandler;
     private Dialog volumeDialog;
     private Slider volumeSlider;
     private ButtonFlat okButton;
@@ -79,6 +89,45 @@ public class MusicPlayerActivity extends Activity {
         }
     };
 
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+//            String event = "";
+            if(intent.hasExtra(BeanConnectionApplication.EVENT)){
+                int cmd = intent.getIntExtra(BeanConnectionApplication.EVENT, 0);
+                switch (cmd){
+                    case 1:
+//                        "Single Click";
+//                        rockShareServerHandler.updateState(1);
+                        updateStateOnParse(1);
+                        break;
+                    case 2:
+                        vibrateNotification(2);
+                        checkWhoIsSharing(2);
+//                        "Double Click";
+                        break;
+                    case 3:
+                        vibrateNotification(3);
+                        checkWhoIsSharing(3);
+//                        "Triple Click";
+                        break;
+                    case -1:
+                        vibrateNotification(-1);
+                        checkWhoIsSharing(-1);
+//                        "Long Click";
+                        break;
+                    default:
+                        break;
+                }
+//                if(event.length() == 0)
+//                    return;
+//                Toast.makeText(getApplicationContext(), event, Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
+
+
     private void openDialog() {
 //        mediaPlayer.pause();
         volumeDialog.show();
@@ -88,6 +137,7 @@ public class MusicPlayerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.music_player_activity);
+        rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
         playAndPauseImageView = (ImageView)findViewById(R.id.playAndPause);
         nextSongImageView = (ImageView) findViewById(R.id.fastForward);
         prevSongImageView = (ImageView) findViewById(R.id.reWind);
@@ -176,7 +226,13 @@ public class MusicPlayerActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        mediaPlayer.start();
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                nextSong();
+            }
+        });
+       playSong();
     }
 
     private int getSongIndex(){
@@ -247,5 +303,79 @@ public class MusicPlayerActivity extends Activity {
     private void readSharePreference(){
         SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
         Log.d(TAG, "read: " + sharedPreferences.getString(Constant.SONG, "Cool") + ", " + sharedPreferences.getInt(Constant.OFFSET, 0));
+    }
+
+    private void playSong(){
+        mediaPlayer.start();
+        rockShareServerHandler.updateSong(list.get(songIndex).getName());
+        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
+    }
+
+    private void checkWhoIsSharing(int state){
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo(Constant.ACCEPT_STATE, state);
+        query.findInBackground(new FindCallback<ParseUser>() {
+            @Override
+            public void done(List<ParseUser> list, ParseException e) {
+                if (e == null) {
+                    if (list.size() == 1) {
+                        Log.d(TAG, "update from parse");
+                        updateInfoByParse(list.get(0).getString(Constant.SONG));
+                        updateMusic(list.get(0).getString(Constant.URL));
+                    } else {
+                        Log.d(TAG, "parse list size");
+                    }
+                } else {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void updateMusic(String url){
+        mediaPlayer.reset();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+            mediaPlayer.setDataSource(url);
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                nextSong();
+            }
+        });
+        playSong();
+    }
+
+    private void updateInfoByParse(String songName) {
+        songNameTextView.setText(songName);
+    }
+
+    private void vibrateNotification(int times){
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        long[] pattern = {0, 200, 500};
+        if(times > 0)
+            vibrator.vibrate(pattern, times - 1);
+        else
+            vibrator.vibrate(pattern, 3);
+    }
+
+    private void updateStateOnParse(int i) {
+        ParseUser user = ParseUser.getCurrentUser();
+        user.put(Constant.SONG, list.get(songIndex).getName());
+//        user.put(Constant.STATE, i);
+        if(i == 1)
+            user.put(Constant.ACCEPT_STATE, randomAcceptState());
+        user.signUpInBackground();
+    }
+
+    private int randomAcceptState() {
+        int num = (int)((Math.random() * 3) + 1);
+        if(num == 1)
+            return -1;
+        return num;
     }
 }
