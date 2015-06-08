@@ -31,16 +31,6 @@ import java.util.List;
  */
 public class RockShareServerHandler {
     private static final String TAG = "RockShareServerHandler";
-    private static final String CLASS = "rockShare";
-    private static final String MSG_CLASS = "RequestMsg";
-    private static final String NAME = "username";
-    private static final String URL = "url";
-    private static final String WIFI = "wifiName";
-    private static final String SONG = "song";
-    private static final String STATE = "state";
-    private static final String ACCEPT_STATE = "accept_state";
-    private static final String OFFSET = "offset";
-    private static final String DEFAULT_PORT = "5566";
 
     private String username = "";
     private String wifiName = "";
@@ -74,14 +64,14 @@ public class RockShareServerHandler {
 //        }
         parseUser.setUsername(this.username);
         parseUser.setPassword("0000");
-        parseUser.put(NAME, this.username);
-        parseUser.put(WIFI, this.wifiName);
+        parseUser.put(Constant.NAME, this.username);
+        parseUser.put(Constant.WIFI, this.wifiName);
         parseUser.put("installationId", parseInstallation.getInstallationId());
-        parseUser.put(URL, this.url);
-        parseUser.put(STATE, this.state);
-        parseUser.put(ACCEPT_STATE, this.accept_state);
-        parseUser.put(SONG, this.song);
-        parseUser.put(OFFSET, this.offset);
+        parseUser.put(Constant.URL, this.url);
+        parseUser.put(Constant.STATE, this.state);
+        parseUser.put(Constant.ACCEPT_STATE, this.accept_state);
+        parseUser.put(Constant.SONG, this.song);
+        parseUser.put(Constant.OFFSET, this.offset);
         ParseRelation<ParseInstallation> relation = parseUser.getRelation("installation");
         relation.add(parseInstallation);
         parseUser.signUpInBackground(new SignUpCallback() {
@@ -124,7 +114,7 @@ public class RockShareServerHandler {
             e.printStackTrace();
         }
         Log.d(TAG, "getURl");
-        return returnUrl + ":" + DEFAULT_PORT;
+        return returnUrl + ":" + Constant.DEFAULT_PORT;
     }
 
     public void updateState(int state){
@@ -144,19 +134,19 @@ public class RockShareServerHandler {
 
     private void updateDataState(){
         ParseUser user = ParseUser.getCurrentUser();
-        user.put(STATE, this.state);
+        user.put(Constant.STATE, this.state);
         user.saveInBackground();
     }
 
     private void updateDataSong(){
         ParseUser user = ParseUser.getCurrentUser();
-        user.put(SONG, this.song);
+        user.put(Constant.SONG, this.song);
         user.saveInBackground();
     }
 
     private void updateDataOffset(){
         ParseUser user  = ParseUser.getCurrentUser();
-        user.put(OFFSET, this.offset);
+        user.put(Constant.OFFSET, this.offset);
         user.saveInBackground();
     }
 
@@ -170,8 +160,8 @@ public class RockShareServerHandler {
 
     public void sendShareRequest(ParseUser target){
         if(target != null){
-            ParseObject message = new ParseObject(MSG_CLASS);
-            message.put("from", parseInstallation.getString(NAME));
+            ParseObject message = new ParseObject(Constant.MSG_CLASS);
+            message.put("from", parseInstallation.getString(Constant.NAME));
             message.put("to", target.getString("username") );
             message.saveInBackground(new SaveCallback() {
                 @Override

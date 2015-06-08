@@ -23,9 +23,7 @@ import fi.iki.elonen.NanoHTTPD;
  * Created by tungying-chao on 6/7/15.
  */
 public class MyHttpd extends NanoHTTPD {
-    private static final String MEDIA_STATE = "mediaState";
-    private static final String SONG = "song";
-    private static final String OFFSET = "offset";
+
 
     private Context context;
 
@@ -88,12 +86,11 @@ public class MyHttpd extends NanoHTTPD {
             Log.d("HTTP", "No context");
             return "";
         }
-        SharedPreferences sharedPreferences = this.context.getSharedPreferences(MEDIA_STATE, 0);
+        SharedPreferences sharedPreferences = this.context.getSharedPreferences(Constant.MEDIA_STATE, 0);
         if(sharedPreferences != null){
-            String songName = sharedPreferences.getString(SONG, "Cool.mp3");
-            String offset = sharedPreferences.getString(OFFSET, "0");
-            int intOffset = Integer.parseInt(offset);
-            ((BeanConnectionApplication) this.context).getRockShareServerHandler().updateOffset(intOffset);
+            String songName = sharedPreferences.getString(Constant.SONG, "Cool.mp3");
+            int offset = sharedPreferences.getInt(Constant.OFFSET, 0);
+            ((BeanConnectionApplication) this.context).getRockShareServerHandler().updateOffset(offset);
             return songName;
         }
         return "";

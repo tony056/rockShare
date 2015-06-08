@@ -3,6 +3,7 @@ package com.example.tungying_chao.rockshare;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.tungying_chao.utilities.Constant;
 import com.example.tungying_chao.utilities.MusicItemAdapter;
 import com.example.tungying_chao.utilities.SongInfo;
 import com.example.tungying_chao.utilities.SongManager;
@@ -113,20 +115,35 @@ public class MusicPlayerActivity extends Activity {
     @Override
     public void onPause(){
         super.onPause();
-        mediaPlayer = null;
+        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
+        sharedPreferences.edit().putString(Constant.SONG, list.get(songIndex).getName())
+                .putInt(Constant.OFFSET, mediaPlayer.getCurrentPosition()).commit();
+        mediaPlayer.pause();
+        Log.d(TAG, "onPause");
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop");
     }
 
     @Override
     public void onResume(){
+        Log.d(TAG, "onResume");
         super.onResume();
         if(mediaPlayer == null){
             mediaPlayer = new MediaPlayer();
         }else {
+            readSharePreference();
             if(!mediaPlayer.isPlaying())
                 mediaPlayer.start();
         }
 
     }
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -227,4 +244,8 @@ public class MusicPlayerActivity extends Activity {
         authorNameTextView.setText(author);
     }
 
+    private void readSharePreference(){
+        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
+        Log.d(TAG, "read: " + sharedPreferences.getString(Constant.SONG, "Cool") + ", " + sharedPreferences.getInt(Constant.OFFSET, 0));
+    }
 }
