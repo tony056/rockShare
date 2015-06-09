@@ -63,7 +63,8 @@ public class MusicPlayerActivity extends Activity {
     private Slider volumeSlider;
     private ButtonFlat okButton;
     private ProgressDialog progressDialog;
-    Pubnub pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
+    Pubnub pubnub;
+    private String pubnubChannel = "";
 
     private TextView songNameTextView;
     private TextView authorNameTextView;
@@ -141,16 +142,21 @@ public class MusicPlayerActivity extends Activity {
     Callback subscribeCallback = new Callback() {
         @Override
         public void successCallback(String channel, Object message) {
-            if(channel.equals(ParseUser.getCurrentUser().getUsername())){
+            Log.d(TAG, ParseUser.getCurrentUser().getUsername() + ", " + channel + ", got message");
+//            if(channel.equals(ParseUser.getCurrentUser().getUsername())){
                 try {
                     JSONObject object = new JSONObject(message.toString());
                     String status = object.getString("broadcast");
                     switch (status){
                         case "ok":
                             checkProgressStatusAndChange();
-                            playSong();
+//                            playSong();
+                            if(!object.getString("from").equals(ParseUser.getCurrentUser().getUsername()))
+                                publishMessage("play");
                             break;
                         case "play":
+                            if(progressDialog.isShowing())
+                                progressDialog.dismiss();
                             playSong();
                             break;
                         case "pause":
@@ -161,7 +167,7 @@ public class MusicPlayerActivity extends Activity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            }
+//            }
         }
 
         @Override
@@ -175,11 +181,30 @@ public class MusicPlayerActivity extends Activity {
         }
     };
 
+    private void publishMessage(String msg) {
+        JSONObject object = new JSONObject();
+
+        try {
+            object.put("from", ParseUser.getCurrentUser().getUsername());
+            object.put("broadcast", msg);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        pubnub.publish(pubnubChannel, object, publishCallback);
+    }
+
     private void checkProgressStatusAndChange() {
-        if(progressDialog.isShowing())
+        if(progressDialog.isShowing()) {
             progressDialog.dismiss();
-        else
-            progressDialog.show();
+        }
+        else {
+            try {
+                progressDialog.show();
+            }catch (Exception e){
+                Log.d(TAG, e.getMessage());
+            }
+
+        }
     }
 
     Callback publishCallback = new Callback() {
@@ -229,6 +254,7 @@ public class MusicPlayerActivity extends Activity {
         prevSongImageView.setOnClickListener(mClickListener);
         volumeImageView.setOnClickListener(mClickListener);
         mediaPlayer = new MediaPlayer();
+        pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
         initLists();
         songIndex = getSongIndex();
         initMediaPlayer(songIndex);
@@ -238,7 +264,7 @@ public class MusicPlayerActivity extends Activity {
     }
 
     private void initProgressDialog() {
-        progressDialog = new ProgressDialog(getApplicationContext());
+        progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("Waiting");
         progressDialog.setMessage("Please wait for sync!");
     }
@@ -321,7 +347,17 @@ public class MusicPlayerActivity extends Activity {
                 nextSong();
             }
         });
-       playSong();
+       playSong(songIndex);
+    }
+
+    private void playSong(int index) {
+        mediaPlayer.start();
+        rockShareServerHandler.updateSong(list.get(index).getName());
+        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
+        playAndPauseImageView.setImageResource(R.drawable.pause);
+        if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername())){
+            publishMessage("play");
+        }
     }
 
     private int getSongIndex(){
@@ -395,23 +431,34 @@ public class MusicPlayerActivity extends Activity {
     }
 
     private void playSong(){
+        if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername()) && !mediaPlayer.isPlaying()){
+            publishMessage("play");
+        }
         mediaPlayer.start();
-        rockShareServerHandler.updateSong(list.get(songIndex).getName());
-        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
-        playAndPauseImageView.setImageResource(R.drawable.pause);
+//        rockShareServerHandler.updateSong(list.get(songIndex).getName());
+//        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                playAndPauseImageView.setImageResource(R.drawable.pause);
+            }
+        });
     }
 
     private void checkWhoIsSharing(int state){
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo(Constant.ACCEPT_STATE, state);
+//        query.orderByAscending("")
         query.findInBackground(new FindCallback<ParseUser>() {
             @Override
             public void done(List<ParseUser> list, ParseException e) {
                 if (e == null) {
                     if (list.size() == 1 && list.get(0) != ParseUser.getCurrentUser()) {
                         Log.d(TAG, "update from parse");
+                        pubnubChannel = list.get(0).getUsername();
                         updateInfoByParse(list.get(0).getString(Constant.SONG));
-                        updateMusic(list.get(0).getString(Constant.URL), list.get(0).getUsername());
+                        updateMusic(list.get(0).getString(Constant.URL), list.get(0).getUsername(), (Integer) list.get(0).getNumber(Constant.OFFSET));
                     } else {
                         Log.d(TAG, "parse list size is not correct.");
                     }
@@ -423,12 +470,20 @@ public class MusicPlayerActivity extends Activity {
         updateStateOnParse(state);
     }
 
-    private void updateMusic(String url, final String channel){
+    private void updateMusic(String url, final String channel, final int offest){
+        Log.d(TAG, "updateMusic, " + url + ", " + channel + ", " + offest);
         mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+            mediaPlayer.setDataSource(url);
+            mediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
+                Log.d(TAG, "onPrepared");
                 JSONObject message = new JSONObject();
                 try {
                     message.put("from", ParseUser.getCurrentUser().getUsername());
@@ -437,14 +492,15 @@ public class MusicPlayerActivity extends Activity {
                     e.printStackTrace();
                 }
                 pubnub.publish(channel, message, publishCallback);
+                try {
+                    pubnub.subscribe(channel, subscribeCallback);
+                } catch (PubnubException e) {
+                    e.printStackTrace();
+                }
+                mp.seekTo(offest);
+//                mp.start();
             }
         });
-        try {
-            mediaPlayer.setDataSource(url);
-            mediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -495,7 +551,7 @@ public class MusicPlayerActivity extends Activity {
                     vibrateNotification(randomNumber);
             }
         });
-        progressDialog.show();
+        checkProgressStatusAndChange();
     }
 
 
@@ -508,6 +564,7 @@ public class MusicPlayerActivity extends Activity {
 
     private void startPubNubChannel(){
         String name = ParseUser.getCurrentUser().getUsername();
+        pubnubChannel = name;
         pubnub.publish(name, "Open the channel", publishCallback);
         try {
             pubnub.subscribe(name, subscribeCallback);
@@ -518,8 +575,17 @@ public class MusicPlayerActivity extends Activity {
 
     private void stopSong(){
         if(mediaPlayer.isPlaying()) {
+            if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername())){
+                publishMessage("pause");
+            }
             mediaPlayer.pause();
-            playAndPauseImageView.setImageResource(R.drawable.play);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    playAndPauseImageView.setImageResource(R.drawable.play);
+                }
+            });
+
         }
     }
 }

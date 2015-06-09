@@ -50,7 +50,7 @@ public class BeanConnectionApplication extends Application {
 
     private Bean myBean;
     private Context context;
-
+    private MyHttpd httpdServer;
 
     private PubNubDataManager pubNubDataManager;
     private RockShareServerHandler rockShareServerHandler;
@@ -305,7 +305,7 @@ public class BeanConnectionApplication extends Application {
     }
 
     private void httpServerInit(){
-        MyHttpd httpdServer = new MyHttpd(5566, getApplicationContext());
+        httpdServer = new MyHttpd(5566, getApplicationContext());
         try {
             httpdServer.start();
         } catch (IOException e) {

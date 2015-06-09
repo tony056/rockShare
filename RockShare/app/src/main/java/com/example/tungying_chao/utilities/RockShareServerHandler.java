@@ -119,7 +119,7 @@ public class RockShareServerHandler {
             e.printStackTrace();
         }
         Log.d(TAG, "getURl");
-        return returnUrl + ":" + Constant.DEFAULT_PORT;
+        return "http://" + returnUrl + ":" + Constant.DEFAULT_PORT;
     }
 
     public void updateState(int state){

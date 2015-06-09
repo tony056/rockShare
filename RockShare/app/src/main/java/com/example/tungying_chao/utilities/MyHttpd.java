@@ -50,10 +50,18 @@ public class MyHttpd extends NanoHTTPD {
             }
             Log.d("fileList", str);
             Log.d("http", Environment.getExternalStorageDirectory().toString());
-//            file = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + getCurrentMusic());
-            file = new FileInputStream(Environment.getExternalStorageDirectory() + "/Cool.mp3");
+            file = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + getCurrentMusic());
+//            file = new FileInputStream(Environment.getExternalStorageDirectory() + "/Cool.mp3");
+//            if(file == null){
+//                Log.d("QQ", "no file");
+//            }else{
+//                File checkFile = new File(Environment.getExternalStorageDirectory() + "/" + getCurrentMusic());
+//                Log.d("QQ", "exist or not: " + checkFile.exists());
+//            }
         }catch (FileNotFoundException e){
             e.printStackTrace();
+        }catch (Exception e){
+            Log.d("QQ", e.getMessage());
         }
         return new NanoHTTPD.Response(Response.Status.OK, "audio/mpeg", file);
     }
@@ -88,10 +96,11 @@ public class MyHttpd extends NanoHTTPD {
         }
         SharedPreferences sharedPreferences = this.context.getSharedPreferences(Constant.MEDIA_STATE, 0);
         if(sharedPreferences != null){
-            String songName = sharedPreferences.getString(Constant.SONG, "Cool.mp3");
+            String songName = sharedPreferences.getString(Constant.SONG, "no song");
             int offset = sharedPreferences.getInt(Constant.OFFSET, 0);
             ((BeanConnectionApplication) this.context).getRockShareServerHandler().updateOffset(offset);
-            return songName;
+            Log.d("current music", songName);
+            return songName + ".mp3";
         }
         return "";
     }
