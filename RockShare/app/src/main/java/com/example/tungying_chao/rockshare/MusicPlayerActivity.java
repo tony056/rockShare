@@ -2,6 +2,7 @@ package com.example.tungying_chao.rockshare;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -35,7 +36,11 @@ import com.parse.SaveCallback;
 import com.pubnub.api.Callback;
 import com.pubnub.api.Pubnub;
 import com.pubnub.api.PubnubError;
+import com.pubnub.api.PubnubException;
 
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,6 +62,8 @@ public class MusicPlayerActivity extends Activity {
     private Dialog volumeDialog;
     private Slider volumeSlider;
     private ButtonFlat okButton;
+    private ProgressDialog progressDialog;
+    Pubnub pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
 
     private TextView songNameTextView;
     private TextView authorNameTextView;
@@ -72,11 +79,9 @@ public class MusicPlayerActivity extends Activity {
             switch (id){
                 case R.id.playAndPause:
                     if(isPlaying == false){
-                        playAndPauseImageView.setImageResource(R.drawable.pause);
-                        mediaPlayer.start();
+                        playSong();
                     }else {
-                        playAndPauseImageView.setImageResource(R.drawable.play);
-                        mediaPlayer.pause();
+                        stopSong();
                     }
                     isPlaying = !isPlaying;
                     break;
@@ -133,8 +138,69 @@ public class MusicPlayerActivity extends Activity {
         }
     };
 
+    Callback subscribeCallback = new Callback() {
+        @Override
+        public void successCallback(String channel, Object message) {
+            if(channel.equals(ParseUser.getCurrentUser().getUsername())){
+                try {
+                    JSONObject object = new JSONObject(message.toString());
+                    String status = object.getString("broadcast");
+                    switch (status){
+                        case "ok":
+                            checkProgressStatusAndChange();
+                            playSong();
+                            break;
+                        case "play":
+                            playSong();
+                            break;
+                        case "pause":
+                            stopSong();
+                            break;
+
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        @Override
+        public void connectCallback(String channel, Object message) {
+            super.connectCallback(channel, message);
+        }
+
+        @Override
+        public void errorCallback(String channel, PubnubError error) {
+            super.errorCallback(channel, error);
+        }
+    };
+
+    private void checkProgressStatusAndChange() {
+        if(progressDialog.isShowing())
+            progressDialog.dismiss();
+        else
+            progressDialog.show();
+    }
+
+    Callback publishCallback = new Callback() {
+        @Override
+        public void successCallback(String channel, Object message) {
+            Log.d(TAG, "pubnub publish good");
+        }
+
+        @Override
+        public void errorCallback(String channel, PubnubError error) {
+            super.errorCallback(channel, error);
+        }
+
+        @Override
+        public void disconnectCallback(String channel, Object message) {
+            super.disconnectCallback(channel, message);
+        }
+    };
+
     private void stopPlayerAndSave() {
-        mediaPlayer.pause();
+        stopSong();
         SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
         sharedPreferences.edit().putString(Constant.SONG, list.get(songIndex).getName())
                 .putInt(Constant.OFFSET, mediaPlayer.getCurrentPosition()).commit();
@@ -168,6 +234,13 @@ public class MusicPlayerActivity extends Activity {
         initMediaPlayer(songIndex);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         initDialog();
+        initProgressDialog();
+    }
+
+    private void initProgressDialog() {
+        progressDialog = new ProgressDialog(getApplicationContext());
+        progressDialog.setTitle("Waiting");
+        progressDialog.setMessage("Please wait for sync!");
     }
 
     private void initLists() {
@@ -325,6 +398,7 @@ public class MusicPlayerActivity extends Activity {
         mediaPlayer.start();
         rockShareServerHandler.updateSong(list.get(songIndex).getName());
         rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
+        playAndPauseImageView.setImageResource(R.drawable.pause);
     }
 
     private void checkWhoIsSharing(int state){
@@ -337,7 +411,7 @@ public class MusicPlayerActivity extends Activity {
                     if (list.size() == 1 && list.get(0) != ParseUser.getCurrentUser()) {
                         Log.d(TAG, "update from parse");
                         updateInfoByParse(list.get(0).getString(Constant.SONG));
-                        updateMusic(list.get(0).getString(Constant.URL));
+                        updateMusic(list.get(0).getString(Constant.URL), list.get(0).getUsername());
                     } else {
                         Log.d(TAG, "parse list size is not correct.");
                     }
@@ -349,9 +423,22 @@ public class MusicPlayerActivity extends Activity {
         updateStateOnParse(state);
     }
 
-    private void updateMusic(String url){
+    private void updateMusic(String url, final String channel){
         mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                JSONObject message = new JSONObject();
+                try {
+                    message.put("from", ParseUser.getCurrentUser().getUsername());
+                    message.put("broadcast", "ok");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                pubnub.publish(channel, message, publishCallback);
+            }
+        });
         try {
             mediaPlayer.setDataSource(url);
             mediaPlayer.prepare();
@@ -364,7 +451,7 @@ public class MusicPlayerActivity extends Activity {
                 nextSong();
             }
         });
-        playSong();
+//        playSong();
     }
 
     private void updateInfoByParse(String songName) {
@@ -390,7 +477,7 @@ public class MusicPlayerActivity extends Activity {
 
     }
 
-    private void updateStateOnParse(int i) {
+    private void updateStateOnParse(final int i) {
         ParseUser user = ParseUser.getCurrentUser();
         user.put(Constant.SONG, list.get(songIndex).getName());
         final int randomNumber = randomAcceptState();
@@ -404,10 +491,13 @@ public class MusicPlayerActivity extends Activity {
             @Override
             public void done(ParseException e) {
                 Log.d(TAG, "saved");
-                vibrateNotification(randomNumber);
+                if (i == 1)
+                    vibrateNotification(randomNumber);
             }
         });
+        progressDialog.show();
     }
+
 
     private int randomAcceptState() {
         int num = (int)((Math.random() * 3) + 1);
@@ -417,23 +507,19 @@ public class MusicPlayerActivity extends Activity {
     }
 
     private void startPubNubChannel(){
-        Pubnub pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
-        pubnub.publish(ParseUser.getCurrentUser().getUsername(), "Open the channel", new Callback() {
-            @Override
-            public void successCallback(String channel, Object message) {
-//                super.successCallback(channel, message);
-                Log.d(TAG, "pubnub publish good");
-            }
+        String name = ParseUser.getCurrentUser().getUsername();
+        pubnub.publish(name, "Open the channel", publishCallback);
+        try {
+            pubnub.subscribe(name, subscribeCallback);
+        } catch (PubnubException e) {
+            e.printStackTrace();
+        }
+    }
 
-            @Override
-            public void errorCallback(String channel, PubnubError error) {
-                super.errorCallback(channel, error);
-            }
-
-            @Override
-            public void disconnectCallback(String channel, Object message) {
-                super.disconnectCallback(channel, message);
-            }
-        });
+    private void stopSong(){
+        if(mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
+            playAndPauseImageView.setImageResource(R.drawable.play);
+        }
     }
 }
