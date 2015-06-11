@@ -181,6 +181,7 @@ public class MusicPlayerActivity extends Activity {
         }
     };
 
+
     private void publishMessage(String msg) {
         JSONObject object = new JSONObject();
 
@@ -476,7 +477,6 @@ public class MusicPlayerActivity extends Activity {
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
             mediaPlayer.setDataSource(url);
-            mediaPlayer.prepareAsync();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -498,9 +498,29 @@ public class MusicPlayerActivity extends Activity {
                     e.printStackTrace();
                 }
                 mp.seekTo(offest);
-//                mp.start();
+                mp.start();
             }
         });
+        try {
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        Log.d(TAG, "onPrepared");
+//        JSONObject message = new JSONObject();
+//        try {
+//            message.put("from", ParseUser.getCurrentUser().getUsername());
+//            message.put("broadcast", "ok");
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+//        pubnub.publish(channel, message, publishCallback);
+//        try {
+//            pubnub.subscribe(channel, subscribeCallback);
+//        } catch (PubnubException e) {
+//            e.printStackTrace();
+//        }
+//        mediaPlayer.seekTo(offest);
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
