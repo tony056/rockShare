@@ -124,7 +124,8 @@ public class MainActivity extends Activity {
 
     private void goToNextActivity(){
         Intent intent = new Intent();
-        intent.setClass(getApplicationContext(), BeanListActivity.class);
+//        intent.setClass(getApplicationContext(), BeanListActivity.class);
+        intent.setClass(getApplicationContext(), MenuActivity.class);
         startActivity(intent);
     }
 

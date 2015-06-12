@@ -136,6 +136,10 @@ public class MusicPlayerActivity extends Activity {
 //                    return;
 //                Toast.makeText(getApplicationContext(), event, Toast.LENGTH_SHORT).show();
             }
+            String artist = intent.getStringExtra("artist");
+            String album = intent.getStringExtra("album");
+            String track = intent.getStringExtra("track");
+
         }
     };
 
@@ -240,6 +244,7 @@ public class MusicPlayerActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("onCreate", "MusicPlayerActivity");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.music_player_activity);
         rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
@@ -265,12 +270,14 @@ public class MusicPlayerActivity extends Activity {
     }
 
     private void initProgressDialog() {
+        Log.d("initProgressDialog", "initProgressDialog");
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("Waiting");
         progressDialog.setMessage("Please wait for sync!");
     }
 
     private void initLists() {
+        Log.d("initList", "initList");
         SongManager songManager = new SongManager(this);
         list = songManager.getSongsList();
     }
@@ -333,6 +340,7 @@ public class MusicPlayerActivity extends Activity {
     }
 
     private void initMediaPlayer(int index){
+        Log.d("initMediaPlayer", "initMediaPlayer");
         mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
@@ -353,6 +361,7 @@ public class MusicPlayerActivity extends Activity {
 
     private void playSong(int index) {
         mediaPlayer.start();
+        Log.d("mediaplayerstart", "mediaplayerstart");
         rockShareServerHandler.updateSong(list.get(index).getName());
         rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
         playAndPauseImageView.setImageResource(R.drawable.pause);
@@ -394,6 +403,7 @@ public class MusicPlayerActivity extends Activity {
     }
 
     private void initDialog(){
+        Log.d("initDialog", "initDialog");
         if(volumeDialog == null)
             volumeDialog = new Dialog(this);
         volumeDialog.setContentView(R.layout.music_player_volume_dialog);
