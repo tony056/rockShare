@@ -57,15 +57,17 @@ public class UserItemAdapter extends BaseAdapter {
         convertView = mLayoutInflater.inflate(R.layout.user_list_item, null);
         TextView userTextView = (TextView)convertView.findViewById(R.id.userName);
         TextView songTextView = (TextView) convertView.findViewById(R.id.songName);
-        TextView stateTextView = (TextView) convertView.findViewById(R.id.userState);
+//        TextView stateTextView = (TextView) convertView.findViewById(R.id.userState);
 
         ParseUser parseObject = userLists.get(position);
         userTextView.setText(parseObject.getString(NAME));
         String song = "Not Listening";
-        if(parseObject.getString(SONG).length() > 0)
-            song = parseObject.getString(SONG);
-        songTextView.setText(song);
-        int state = parseObject.getInt(STATE);
+        if(parseObject.getString(Constant.SONG) != null) {
+            if (parseObject.getString(Constant.SONG).length() > 0)
+                song = parseObject.getString(Constant.SONG);
+        }
+            songTextView.setText(song);
+        int state = parseObject.getInt(Constant.STATE);
         String stateStr = "";
         switch (state){
             case 0:
@@ -79,7 +81,7 @@ public class UserItemAdapter extends BaseAdapter {
                 break;
 
         }
-        stateTextView.setText(stateStr);
+//        stateTextView.setText(stateStr);
         return convertView;
     }
 }

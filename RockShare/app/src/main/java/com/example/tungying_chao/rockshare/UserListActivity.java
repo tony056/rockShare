@@ -36,6 +36,7 @@ public class UserListActivity extends Activity {
     private List<ParseUser> users;
     List<ParseUser> list = new ArrayList<ParseUser>();
     private RockShareServerHandler rockShareServerHandler;
+    private ProgressDialog waitForResponseDialog;
 
 
 
@@ -44,6 +45,7 @@ public class UserListActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_list_activity);
         rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
+        initWaitForResponseDialog();
         new RemoteDataTask().execute();
     }
 
@@ -84,6 +86,15 @@ public class UserListActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void initWaitForResponseDialog(){
+        waitForResponseDialog = new ProgressDialog(UserListActivity.this);
+        waitForResponseDialog.setTitle("Waiting for the response");
+        waitForResponseDialog.setMessage("Please wait...");
+        waitForResponseDialog.setIndeterminate(true);
+//        waitForResponseDialog.show();
+
+    }
+
     private class RemoteDataTask extends AsyncTask<Void, Void, Void>{
 
         @Override
@@ -114,9 +125,10 @@ public class UserListActivity extends Activity {
             userListView = (ListView)findViewById(R.id.userListView);
 
             for(ParseUser obj: users){
-                if(!obj.getString("installationId").equals(ParseInstallation.getCurrentInstallation().getInstallationId())){
+//                if(!obj.getString("installationId").equals(ParseInstallation.getCurrentInstallation().getInstallationId())){
+//                if(!obj.getUsername().equals(((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler().getUsername())){
                     list.add(obj);
-                }
+//                }
             }
 
             UserItemAdapter adapter = new UserItemAdapter(getApplicationContext(), list);
@@ -128,8 +140,10 @@ public class UserListActivity extends Activity {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Log.d(TAG, "clicked");
                     ParseUser user = list.get(position);
-                    if(user.getInt("state") == 0)
-                        rockShareServerHandler.sendShareRequest(user);
+                    if(user.getInt("state") == 0) {
+//                        rockShareServerHandler.sendShareRequest(user);
+                        waitForResponseDialog.show();
+                    }
                     else
                         Toast.makeText(getApplicationContext(), user.getString("username") + " cannot share with you right now!", Toast.LENGTH_SHORT).show();
                 }

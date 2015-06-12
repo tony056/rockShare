@@ -687,5 +687,6 @@ public class CheckActivity extends Activity {
 //        pubnub.publish(pubnubChannel, object, publishCallback);
 //        pubnubChannel here should be sender
         RockShareServerHandler rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
+//         platSong()
     }
 }

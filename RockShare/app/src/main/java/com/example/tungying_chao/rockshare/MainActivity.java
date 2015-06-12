@@ -124,7 +124,10 @@ public class MainActivity extends Activity {
 
     private void goToNextActivity(){
         Intent intent = new Intent();
+<<<<<<< Updated upstream
 //        intent.setClass(getApplicationContext(), BeanListActivity.class);
+=======
+>>>>>>> Stashed changes
         intent.setClass(getApplicationContext(), MenuActivity.class);
         startActivity(intent);
     }
