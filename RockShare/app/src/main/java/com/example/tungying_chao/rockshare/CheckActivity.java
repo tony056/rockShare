@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class CheckActivity extends Activity {
 
-    private static final String TAG = "MusicPlayerActivity";
+    private static final String TAG = "CheckActivity";
     private static final String ACC_CLASS = "AcceptMsg";
     JSONObject object;
     private com.gc.materialdesign.widgets.Dialog dialog;
@@ -68,7 +68,7 @@ public class CheckActivity extends Activity {
     private ButtonFlat okButton;
     private ProgressDialog progressDialog;
     Pubnub pubnub;
-    private String pubnubChannel = "";
+    private String pubnubChannel = ParseUser.getCurrentUser().getUsername();
 
     private TextView songNameTextView;
     private TextView authorNameTextView;
@@ -245,24 +245,26 @@ public class CheckActivity extends Activity {
     View.OnClickListener acceptClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Log.d("Check", "Accepted");
+        publishMessage("Accept");
+        Log.d("Check", "Accepted");
 //            finish();   //use sendAcceptMessage()?
 //            michael
-//            sendAcceptMessage();
+        dialog.dismiss();
         }
     };
 
     View.OnClickListener cancelClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Log.d("Check", "Cancelled");
-            dialog.dismiss();
+        publishMessage("Reject");
+        Log.d("Check", "Rejected");
+        dialog.dismiss();
         }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d("onCreate", "MusicPlayerActivity");
+        Log.d(TAG, "oncreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.music_player_activity);
         rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
@@ -301,6 +303,7 @@ public class CheckActivity extends Activity {
             dialog.setOnCancelButtonClickListener(cancelClickListener);
             dialog.show();
         } catch (JSONException e) {
+            Log.d(TAG, "exception");
             e.printStackTrace();
         }
     }
@@ -667,26 +670,25 @@ public class CheckActivity extends Activity {
 
     private void sendAcceptMessage(){
 //        michael
-//        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
+        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
 //        String song = sharedPreferences.getString(Constant.SONG, "null");
-//        int offset = sharedPreferences.getInt(Constant.OFFSET, 0);
+        int offset = sharedPreferences.getInt(Constant.OFFSET, 0);
 
-        ParseObject msg = new ParseObject(ACC_CLASS);
-        msg.put("from", ParseUser.getCurrentUser().getString("url"));
-        if(object == null){
-            Log.d(TAG, "null json object");
-            return;
-        }
-        try {
-            msg.put("to", object.getString("url"));
-            msg.saveInBackground();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-//        michael
-//        pubnub.publish(pubnubChannel, object, publishCallback);
-//        pubnubChannel here should be sender
+//        ParseObject msg = new ParseObject(ACC_CLASS);
+//        msg.put("from", ParseUser.getCurrentUser().getString("url"));
+//        if(object == null){
+//            Log.d(TAG, "null json object");
+//            return;
+//        }
+//        try {
+//            msg.put("to", object.getString("url"));
+//            msg.saveInBackground();
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+
+        pubnub.publish(pubnubChannel, object, publishCallback);
         RockShareServerHandler rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
-//         platSong()
+        playSong();
     }
 }

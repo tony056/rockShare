@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +21,10 @@ import com.parse.ParseInstallation;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.pubnub.api.Callback;
+import com.pubnub.api.Pubnub;
+import com.pubnub.api.PubnubError;
+import com.pubnub.api.PubnubException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +42,7 @@ public class UserListActivity extends Activity {
     List<ParseUser> list = new ArrayList<ParseUser>();
     private RockShareServerHandler rockShareServerHandler;
     private ProgressDialog waitForResponseDialog;
+    Pubnub pubnub;
 
 
 
@@ -47,6 +53,7 @@ public class UserListActivity extends Activity {
         rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
         initWaitForResponseDialog();
         new RemoteDataTask().execute();
+        pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
     }
 
     @Override
@@ -95,6 +102,21 @@ public class UserListActivity extends Activity {
 
     }
 
+    Callback subscribeCallback = new Callback() {
+        @Override
+        public void successCallback(String channel, Object message) {
+            super.successCallback(channel, message);
+            Log.d(TAG, message.toString());
+        }
+
+        @Override
+        public void errorCallback(String channel, PubnubError error) {
+            super.errorCallback(channel, error);
+            Log.d(TAG, "error");
+        }
+    };
+
+
     private class RemoteDataTask extends AsyncTask<Void, Void, Void>{
 
         @Override
@@ -109,6 +131,7 @@ public class UserListActivity extends Activity {
             }
             return null;
         }
+
 
         @Override
         protected void onPreExecute() {
@@ -140,8 +163,14 @@ public class UserListActivity extends Activity {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Log.d(TAG, "clicked");
                     ParseUser user = list.get(position);
+                    Log.d("TAG", user.getUsername());
                     if(user.getInt("state") == 0) {
-//                        rockShareServerHandler.sendShareRequest(user);
+                        rockShareServerHandler.sendShareRequest(user);
+                        try {
+                            pubnub.subscribe(user.getUsername(), subscribeCallback);
+                        } catch (PubnubException e) {
+                            e.printStackTrace();
+                        }
                         waitForResponseDialog.show();
                     }
                     else
