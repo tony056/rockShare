@@ -383,7 +383,7 @@ public class CheckActivity extends Activity {
     }
 
     private void initMediaPlayer(int index){
-        Log.d("initMediaPlayer", "initMediaPlayer");
+        Log.d(TAG, "initMediaPlayer");
         mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {

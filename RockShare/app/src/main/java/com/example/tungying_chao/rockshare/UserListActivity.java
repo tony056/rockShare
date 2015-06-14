@@ -2,6 +2,8 @@ package com.example.tungying_chao.rockshare;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,8 +16,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.tungying_chao.beanconnection.BeanConnectionApplication;
+import com.example.tungying_chao.utilities.Constant;
 import com.example.tungying_chao.utilities.RockShareServerHandler;
 import com.example.tungying_chao.utilities.UserItemAdapter;
+import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
 import com.parse.ParseObject;
@@ -26,6 +30,10 @@ import com.pubnub.api.Pubnub;
 import com.pubnub.api.PubnubError;
 import com.pubnub.api.PubnubException;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +51,7 @@ public class UserListActivity extends Activity {
     private RockShareServerHandler rockShareServerHandler;
     private ProgressDialog waitForResponseDialog;
     Pubnub pubnub;
+    private MediaPlayer mediaPlayer;
 
 
 
@@ -102,11 +111,38 @@ public class UserListActivity extends Activity {
 
     }
 
+//            michael
     Callback subscribeCallback = new Callback() {
         @Override
         public void successCallback(String channel, Object message) {
-            super.successCallback(channel, message);
+//            super.successCallback(channel, message);
             Log.d(TAG, message.toString());
+            try {
+                JSONObject object = new JSONObject(message.toString());
+//                not sure with the key
+                String status = object.getString("broadcast");
+                switch (status){
+                    case "Accept":
+                        userAcceptSharing(channel);
+                        break;
+
+                    case "Reject":
+                        userRejectSharing();
+                        break;
+
+                    case "play":
+                        mediaPlayer.start();
+                        break;
+
+                    case "pause":
+                        mediaPlayer.pause();
+                        break;
+
+                }
+            } catch (JSONException e) {
+                Log.d(TAG, "Subscribe callback error");
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -116,6 +152,129 @@ public class UserListActivity extends Activity {
         }
     };
 
+// michael
+    private void initMediaPlayer() {
+        Log.d(TAG, "initMediaPlayer");
+        mediaPlayer.reset();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+//            still require song name to get source
+//            mediaPlayer.setDataSource(list.get(index).getPath());
+
+//            [ additional ]
+//            update song's info if want to show
+//            suggestions: use dialog
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mediaPlayer.stop();
+            }
+        });
+    }
+
+//    private void playSong(){
+//        if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername()) && !mediaPlayer.isPlaying()){
+//            publishMessage("play");
+//        }
+//        mediaPlayer.start();
+////        rockShareServerHandler.updateSong(list.get(songIndex).getName());
+////        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
+//
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                playAndPauseImageView.setImageResource(R.drawable.pause);
+//            }
+//        });
+//    }
+
+//    michael
+//    get song name and offset
+    private void getSongInfo(String name) {
+        ParseQuery<ParseUser> query = ParseUser.getQuery();
+        query.whereEqualTo(Constant.NAME, name);
+//        query.orderByAscending("")
+        query.findInBackground(new FindCallback<ParseUser>() {
+            @Override
+            public void done(List<ParseUser> list, ParseException e) {
+                if (e == null) {
+                    if (list.size() == 1) {
+                        Log.d(TAG, "Find user");
+//                        pubnubChannel = list.get(0).getUsername();
+                        updateMusic(list.get(0).getString(Constant.URL), list.get(0).getUsername(), (Integer) list.get(0).getNumber(Constant.OFFSET));
+                    } else {
+                        Log.d(TAG, "Update user fail");
+                    }
+                } else {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void updateMusic(String url, final String channel, final int offest){
+        Log.d(TAG, "updateMusic, " + url + ", " + channel + ", " + offest);
+        mediaPlayer.reset();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+            mediaPlayer.setDataSource(url);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                Log.d(TAG, "onPrepared");
+                JSONObject message = new JSONObject();
+                try {
+                    message.put("from", ParseUser.getCurrentUser().getUsername());
+                    message.put("broadcast", "ok");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    pubnub.subscribe(channel, subscribeCallback);
+                } catch (PubnubException e) {
+                    e.printStackTrace();
+                }
+                mp.seekTo(offest);
+            }
+        });
+        try {
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mediaPlayer.stop();
+            }
+        });
+//        playSong();
+    }
+
+    private void userRejectSharing() {
+        waitForResponseDialog.dismiss();
+        Log.d(TAG, "Reject");
+        // toast
+    }
+
+    private void userAcceptSharing(String name) {
+        waitForResponseDialog.dismiss();
+        Log.d(TAG, "Accept");
+//        michael
+//        get song information on parse
+        getSongInfo(name);
+
+//        intent to get song
+        initMediaPlayer();
+
+    }
 
     private class RemoteDataTask extends AsyncTask<Void, Void, Void>{
 
