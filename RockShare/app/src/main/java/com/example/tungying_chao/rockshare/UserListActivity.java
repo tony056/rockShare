@@ -330,7 +330,12 @@ public class UserListActivity extends Activity {
                         } catch (PubnubException e) {
                             e.printStackTrace();
                         }
-                        waitForResponseDialog.show();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                waitForResponseDialog.show();
+                            }
+                        });
                     }
                     else
                         Toast.makeText(getApplicationContext(), user.getString("username") + " cannot share with you right now!", Toast.LENGTH_SHORT).show();
