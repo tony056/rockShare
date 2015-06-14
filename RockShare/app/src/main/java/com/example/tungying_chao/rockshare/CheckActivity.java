@@ -68,7 +68,7 @@ public class CheckActivity extends Activity {
     private ButtonFlat okButton;
     private ProgressDialog progressDialog;
     Pubnub pubnub;
-    private String pubnubChannel = ParseUser.getCurrentUser().getUsername();
+    private String pubnubChannel = "null";
 
     private TextView songNameTextView;
     private TextView authorNameTextView;
@@ -152,7 +152,7 @@ public class CheckActivity extends Activity {
                 String status = object.getString("broadcast");
                 switch (status){
                     case "ok":
-                        checkProgressStatusAndChange();
+//                        checkProgressStatusAndChange();
 //                            playSong();
                         if(!object.getString("from").equals(ParseUser.getCurrentUser().getUsername()))
                             publishMessage("play");
@@ -231,7 +231,7 @@ public class CheckActivity extends Activity {
     private void stopPlayerAndSave() {
         stopSong();
         SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
-        sharedPreferences.edit().putString(Constant.SONG, list.get(songIndex).getName())
+        sharedPreferences.edit().putString(Constant.SONG, songNameTextView.getText().toString())
                 .putInt(Constant.OFFSET, mediaPlayer.getCurrentPosition()).commit();
     }
 
@@ -265,6 +265,7 @@ public class CheckActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "oncreate");
+        Log.d(TAG, "My name is: " + ParseUser.getCurrentUser().getUsername());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.music_player_activity);
         rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
@@ -282,15 +283,15 @@ public class CheckActivity extends Activity {
         mediaPlayer = new MediaPlayer();
         pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
         initLists();
-        songIndex = getSongIndex();
+//        songIndex = getSongIndex();
 //        michael
 //        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
 //        song = sharedPreferences.getString("song", "null");
 //        offset = sharedPreferences.getInt("offset", 0);
-        initMediaPlayer(songIndex);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         initDialog();
         initProgressDialog();
+        initMediaPlayer();
 
         String title = "RockShare Request";
         String json = getIntent().getExtras().getString("com.parse.Data");
@@ -299,6 +300,7 @@ public class CheckActivity extends Activity {
             String msg = object.getString("from") + " wants you to share music with him!";
             dialog = new Dialog(this, title, msg);
             dialog.addCancelButton("Cancel");
+            pubnubChannel = object.getString("from");
             dialog.setOnAcceptButtonClickListener(acceptClickListener);
             dialog.setOnCancelButtonClickListener(cancelClickListener);
             dialog.show();
@@ -326,7 +328,7 @@ public class CheckActivity extends Activity {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
         SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
-        sharedPreferences.edit().putString(Constant.SONG, list.get(songIndex).getName())
+        sharedPreferences.edit().putString(Constant.SONG, songNameTextView.getText().toString())
                 .putInt(Constant.OFFSET, mediaPlayer.getCurrentPosition()).commit();
         mediaPlayer.pause();
         Log.d(TAG, "onPause");
@@ -382,13 +384,16 @@ public class CheckActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void initMediaPlayer(int index){
+    private void initMediaPlayer(){
         Log.d(TAG, "initMediaPlayer");
+        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
         mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
+            int index = getSongByName(sharedPreferences.getString(Constant.SONG, ""));
+            if(index < 0)
+                return;
             mediaPlayer.setDataSource(list.get(index).getPath());
-            updateInfo();
             mediaPlayer.prepare();
         } catch (IOException e) {
             e.printStackTrace();
@@ -399,7 +404,20 @@ public class CheckActivity extends Activity {
                 nextSong();
             }
         });
-        playSong(songIndex);
+//        playSong(songIndex);
+        //for check activity
+
+        songNameTextView.setText(sharedPreferences.getString(Constant.SONG, ""));
+        mediaPlayer.seekTo(sharedPreferences.getInt(Constant.OFFSET, 0));
+    }
+
+    private int getSongByName(String song) {
+        for(int i = 0; i < list.size(); i++){
+            if(list.get(i).getName().equals(song)){
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void playSong(int index) {
@@ -429,6 +447,26 @@ public class CheckActivity extends Activity {
             songIndex = 0;
         initMediaPlayer(songIndex);
         updateInfo();
+    }
+
+    private void initMediaPlayer(int songIndex) {
+        Log.d("initMediaPlayer", "initMediaPlayer");
+        mediaPlayer.reset();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+            mediaPlayer.setDataSource(list.get(songIndex).getPath());
+            updateInfo();
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                nextSong();
+            }
+        });
+        playSong(songIndex);
     }
 
     private void prevSong(){
@@ -487,7 +525,7 @@ public class CheckActivity extends Activity {
 
     private void readSharePreference(){
         SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
-        Log.d(TAG, "read: " + sharedPreferences.getString(Constant.SONG, "Cool") + ", " + sharedPreferences.getInt(Constant.OFFSET, 0));
+        Log.d(TAG, "read: " + sharedPreferences.getString(Constant.SONG, "") + ", " + sharedPreferences.getInt(Constant.OFFSET, 0));
     }
 
     private void playSong(){
@@ -507,27 +545,27 @@ public class CheckActivity extends Activity {
     }
 
     private void checkWhoIsSharing(int state){
-        ParseQuery<ParseUser> query = ParseUser.getQuery();
-        query.whereEqualTo(Constant.ACCEPT_STATE, state);
-//        query.orderByAscending("")
-        query.findInBackground(new FindCallback<ParseUser>() {
-            @Override
-            public void done(List<ParseUser> list, ParseException e) {
-                if (e == null) {
-                    if (list.size() == 1 && list.get(0) != ParseUser.getCurrentUser()) {
-                        Log.d(TAG, "update from parse");
-                        pubnubChannel = list.get(0).getUsername();
-                        updateInfoByParse(list.get(0).getString(Constant.SONG));
-                        updateMusic(list.get(0).getString(Constant.URL), list.get(0).getUsername(), (Integer) list.get(0).getNumber(Constant.OFFSET));
-                    } else {
-                        Log.d(TAG, "parse list size is not correct.");
-                    }
-                } else {
-                    e.printStackTrace();
-                }
-            }
-        });
-        updateStateOnParse(state);
+//        ParseQuery<ParseUser> query = ParseUser.getQuery();
+//        query.whereEqualTo(Constant.ACCEPT_STATE, state);
+////        query.orderByAscending("")
+//        query.findInBackground(new FindCallback<ParseUser>() {
+//            @Override
+//            public void done(List<ParseUser> list, ParseException e) {
+//                if (e == null) {
+//                    if (list.size() == 1 && list.get(0) != ParseUser.getCurrentUser()) {
+//                        Log.d(TAG, "update from parse");
+//                        pubnubChannel = list.get(0).getUsername();
+//                        updateInfoByParse(list.get(0).getString(Constant.SONG));
+//                        updateMusic(list.get(0).getString(Constant.URL), list.get(0).getUsername(), (Integer) list.get(0).getNumber(Constant.OFFSET));
+//                    } else {
+//                        Log.d(TAG, "parse list size is not correct.");
+//                    }
+//                } else {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//        updateStateOnParse(state);
     }
 
     private void updateMusic(String url, final String channel, final int offest){
@@ -614,7 +652,7 @@ public class CheckActivity extends Activity {
 
     private void updateStateOnParse(final int i) {
         ParseUser user = ParseUser.getCurrentUser();
-        user.put(Constant.SONG, list.get(songIndex).getName());
+        user.put(Constant.SONG, songNameTextView.getText().toString());
         final int randomNumber = randomAcceptState();
         if(i == 1) {
             user.put(Constant.ACCEPT_STATE, randomNumber);

@@ -53,6 +53,52 @@ public class UserListActivity extends Activity {
     Pubnub pubnub;
     private MediaPlayer mediaPlayer;
 
+    private ListView.OnItemClickListener onItemClickListener = new ListView.OnItemClickListener(){
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            Log.d(TAG, "clicked");
+            ParseUser user = list.get(position);
+            Log.d("TAG", user.getUsername());
+            if(user.getInt("state") == 0) {
+                rockShareServerHandler.sendShareRequest(user);
+                try {
+                    pubnub.subscribe(ParseUser.getCurrentUser().getUsername(), subscribeCallback);
+                } catch (PubnubException e) {
+                    e.printStackTrace();
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            waitForResponseDialog.show();
+                        }catch (Exception e){
+                            Log.d(TAG, e.getMessage());
+                        }
+                    }
+                });
+            }
+            else
+                Toast.makeText(getApplicationContext(), user.getString("username") + " cannot share with you right now!", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    Callback publishCallback = new Callback() {
+        @Override
+        public void successCallback(String channel, Object message) {
+            Log.d(TAG, "pubnub publish good");
+        }
+
+        @Override
+        public void errorCallback(String channel, PubnubError error) {
+            super.errorCallback(channel, error);
+        }
+
+        @Override
+        public void disconnectCallback(String channel, Object message) {
+            super.disconnectCallback(channel, message);
+        }
+    };
 
 
     @Override
@@ -63,6 +109,7 @@ public class UserListActivity extends Activity {
         initWaitForResponseDialog();
         new RemoteDataTask().execute();
         pubnub = ((BeanConnectionApplication)getApplicationContext()).getMyPubNub();
+        initMediaPlayer();
     }
 
     @Override
@@ -120,10 +167,11 @@ public class UserListActivity extends Activity {
             try {
                 JSONObject object = new JSONObject(message.toString());
 //                not sure with the key
+                String sender = object.getString("from");
                 String status = object.getString("broadcast");
                 switch (status){
                     case "Accept":
-                        userAcceptSharing(channel);
+                        userAcceptSharing(sender);
                         break;
 
                     case "Reject":
@@ -131,11 +179,15 @@ public class UserListActivity extends Activity {
                         break;
 
                     case "play":
-                        mediaPlayer.start();
+                        if(mediaPlayer != null) {
+                            mediaPlayer.start();
+                        }
                         break;
 
                     case "pause":
-                        mediaPlayer.pause();
+                        if(mediaPlayer != null) {
+                            mediaPlayer.pause();
+                        }
                         break;
 
                 }
@@ -155,25 +207,20 @@ public class UserListActivity extends Activity {
 // michael
     private void initMediaPlayer() {
         Log.d(TAG, "initMediaPlayer");
+        mediaPlayer = new MediaPlayer();
         mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        try {
-//            still require song name to get source
-//            mediaPlayer.setDataSource(list.get(index).getPath());
-
-//            [ additional ]
-//            update song's info if want to show
-//            suggestions: use dialog
-            mediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                mediaPlayer.stop();
-            }
-        });
+//        try {
+//            mediaPlayer.prepare();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//            @Override
+//            public void onCompletion(MediaPlayer mp) {
+//                mediaPlayer.stop();
+//            }
+//        });
     }
 
 //    private void playSong(){
@@ -205,7 +252,7 @@ public class UserListActivity extends Activity {
                     if (list.size() == 1) {
                         Log.d(TAG, "Find user");
 //                        pubnubChannel = list.get(0).getUsername();
-                        updateMusic(list.get(0).getString(Constant.URL), list.get(0).getUsername(), (Integer) list.get(0).getNumber(Constant.OFFSET));
+                        updateMusic(list.get(0).getString(Constant.URL), ParseUser.getCurrentUser().getUsername(), (Integer) list.get(0).getNumber(Constant.OFFSET));
                     } else {
                         Log.d(TAG, "Update user fail");
                     }
@@ -218,6 +265,7 @@ public class UserListActivity extends Activity {
 
     private void updateMusic(String url, final String channel, final int offest){
         Log.d(TAG, "updateMusic, " + url + ", " + channel + ", " + offest);
+
         mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
@@ -236,12 +284,14 @@ public class UserListActivity extends Activity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                try {
-                    pubnub.subscribe(channel, subscribeCallback);
-                } catch (PubnubException e) {
-                    e.printStackTrace();
-                }
+                pubnub.publish(channel, message, publishCallback);
+//                try {
+//                    pubnub.subscribe(channel, subscribeCallback);
+//                } catch (PubnubException e) {
+//                    e.printStackTrace();
+//                }
                 mp.seekTo(offest);
+                mp.start();
             }
         });
         try {
@@ -259,20 +309,39 @@ public class UserListActivity extends Activity {
     }
 
     private void userRejectSharing() {
-        waitForResponseDialog.dismiss();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    waitForResponseDialog.dismiss();
+                } catch (Exception e) {
+                    Log.d(TAG, e.getMessage());
+                }
+            }
+        });
         Log.d(TAG, "Reject");
         // toast
+        Toast.makeText(UserListActivity.this, "Your request was rejected!", Toast.LENGTH_SHORT).show();
     }
 
     private void userAcceptSharing(String name) {
-        waitForResponseDialog.dismiss();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    waitForResponseDialog.dismiss();
+                }catch (Exception e){
+                    Log.d(TAG, e.getMessage());
+                }
+            }
+        });
         Log.d(TAG, "Accept");
 //        michael
 //        get song information on parse
         getSongInfo(name);
 
 //        intent to get song
-        initMediaPlayer();
+//        initMediaPlayer();
 
     }
 
@@ -316,31 +385,7 @@ public class UserListActivity extends Activity {
             UserItemAdapter adapter = new UserItemAdapter(getApplicationContext(), list);
             userListView.setAdapter(adapter);
             mProgressDialog.dismiss();
-            userListView.setOnItemClickListener(new ListView.OnItemClickListener(){
-
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Log.d(TAG, "clicked");
-                    ParseUser user = list.get(position);
-                    Log.d("TAG", user.getUsername());
-                    if(user.getInt("state") == 0) {
-                        rockShareServerHandler.sendShareRequest(user);
-                        try {
-                            pubnub.subscribe(user.getUsername(), subscribeCallback);
-                        } catch (PubnubException e) {
-                            e.printStackTrace();
-                        }
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                waitForResponseDialog.show();
-                            }
-                        });
-                    }
-                    else
-                        Toast.makeText(getApplicationContext(), user.getString("username") + " cannot share with you right now!", Toast.LENGTH_SHORT).show();
-                }
-            });
+            userListView.setOnItemClickListener(onItemClickListener);
         }
     }
 }

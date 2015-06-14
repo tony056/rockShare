@@ -12,7 +12,8 @@ Parse.Cloud.afterSave("RequestMsg", function(request){
 		where: query,
 		data: {
 			alert: request.object.get('from').toString() + " asks you to share music!",
-			uri: "myapp://host/path"
+			uri: "myapp://host/path",
+			from: request.object.get('from').toString()
 		}
 	}, {
 		success: function() {
