@@ -171,7 +171,7 @@ public class UserListActivity extends Activity {
                 String status = object.getString("broadcast");
                 switch (status){
                     case "Accept":
-                        userAcceptSharing(sender);
+                        userAcceptSharing(sender, object.getInt("offset"));
                         break;
 
                     case "Reject":
@@ -179,7 +179,11 @@ public class UserListActivity extends Activity {
                         break;
 
                     case "play":
+                        if(mProgressDialog.isShowing())
+                            mProgressDialog.dismiss();
                         if(mediaPlayer != null) {
+                            Log.d(TAG, "play and seek");
+//                            mediaPlayer.seekTo(object.getInt("offset"));
                             mediaPlayer.start();
                         }
                         break;
@@ -241,7 +245,15 @@ public class UserListActivity extends Activity {
 
 //    michael
 //    get song name and offset
-    private void getSongInfo(String name) {
+    private void getSongInfo(String name, final int offset) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mProgressDialog.setTitle("Sync the song...");
+                mProgressDialog.show();
+            }
+        });
+
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereEqualTo(Constant.NAME, name);
 //        query.orderByAscending("")
@@ -252,7 +264,7 @@ public class UserListActivity extends Activity {
                     if (list.size() == 1) {
                         Log.d(TAG, "Find user");
 //                        pubnubChannel = list.get(0).getUsername();
-                        updateMusic(list.get(0).getString(Constant.URL), ParseUser.getCurrentUser().getUsername(), (Integer) list.get(0).getNumber(Constant.OFFSET));
+                        updateMusic(list.get(0).getString(Constant.URL), ParseUser.getCurrentUser().getUsername(), offset);
                     } else {
                         Log.d(TAG, "Update user fail");
                     }
@@ -273,10 +285,12 @@ public class UserListActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 Log.d(TAG, "onPrepared");
+                mp.seekTo(offest);
                 JSONObject message = new JSONObject();
                 try {
                     message.put("from", ParseUser.getCurrentUser().getUsername());
@@ -290,8 +304,8 @@ public class UserListActivity extends Activity {
 //                } catch (PubnubException e) {
 //                    e.printStackTrace();
 //                }
-                mp.seekTo(offest);
-                mp.start();
+
+//                mp.start();
             }
         });
         try {
@@ -324,7 +338,7 @@ public class UserListActivity extends Activity {
         Toast.makeText(UserListActivity.this, "Your request was rejected!", Toast.LENGTH_SHORT).show();
     }
 
-    private void userAcceptSharing(String name) {
+    private void userAcceptSharing(String name, int offset) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -338,7 +352,7 @@ public class UserListActivity extends Activity {
         Log.d(TAG, "Accept");
 //        michael
 //        get song information on parse
-        getSongInfo(name);
+        getSongInfo(name, offset);
 
 //        intent to get song
 //        initMediaPlayer();

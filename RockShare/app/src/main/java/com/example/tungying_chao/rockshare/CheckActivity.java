@@ -152,7 +152,7 @@ public class CheckActivity extends Activity {
                 String status = object.getString("broadcast");
                 switch (status){
                     case "ok":
-//                        checkProgressStatusAndChange();
+                        checkProgressStatusAndChange();
 //                            playSong();
                         if(!object.getString("from").equals(ParseUser.getCurrentUser().getUsername()))
                             publishMessage("play");
@@ -191,6 +191,9 @@ public class CheckActivity extends Activity {
         try {
             object.put("from", ParseUser.getCurrentUser().getUsername());
             object.put("broadcast", msg);
+            if(msg.equals("Accept")){
+                object.put("offset", mediaPlayer.getCurrentPosition());
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -245,11 +248,14 @@ public class CheckActivity extends Activity {
     View.OnClickListener acceptClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-        publishMessage("Accept");
-        Log.d("Check", "Accepted");
+            publishMessage("Accept");
+            subscribePubnubChannel();
+            Log.d("Check", "Accepted");
 //            finish();   //use sendAcceptMessage()?
 //            michael
-        dialog.dismiss();
+            dialog.dismiss();
+            checkProgressStatusAndChange();
+
         }
     };
 
@@ -347,13 +353,13 @@ public class CheckActivity extends Activity {
         super.onResume();
         IntentFilter mFilter = new IntentFilter(BeanConnectionApplication.TOUCH_EVENT);
         registerReceiver(broadcastReceiver, mFilter);
-        if(mediaPlayer == null){
-            mediaPlayer = new MediaPlayer();
-        }else {
-            readSharePreference();
-            if(!mediaPlayer.isPlaying())
-                mediaPlayer.start();
-        }
+//        if(mediaPlayer == null){
+//            mediaPlayer = new MediaPlayer();
+//        }else {
+//            readSharePreference();
+//            if(!mediaPlayer.isPlaying())
+//                mediaPlayer.start();
+//        }
 
     }
 
@@ -529,9 +535,9 @@ public class CheckActivity extends Activity {
     }
 
     private void playSong(){
-        if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername()) && !mediaPlayer.isPlaying()){
-            publishMessage("play");
-        }
+//        if(!pubnubChannel.equals(ParseUser.getCurrentUser().getUsername()) && !mediaPlayer.isPlaying()){
+//            publishMessage("play");
+//        }
         mediaPlayer.start();
 //        rockShareServerHandler.updateSong(list.get(songIndex).getName());
 //        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
@@ -728,5 +734,13 @@ public class CheckActivity extends Activity {
         pubnub.publish(pubnubChannel, object, publishCallback);
         RockShareServerHandler rockShareServerHandler = ((BeanConnectionApplication)getApplicationContext()).getRockShareServerHandler();
         playSong();
+    }
+
+    private void subscribePubnubChannel(){
+        try {
+            pubnub.subscribe(pubnubChannel, subscribeCallback);
+        } catch (PubnubException e) {
+            e.printStackTrace();
+        }
     }
 }
