@@ -184,7 +184,7 @@ public class UserListActivity extends Activity {
                         if(mediaPlayer != null) {
                             Log.d(TAG, "play and seek");
 //                            mediaPlayer.seekTo(object.getInt("offset"));
-                            mediaPlayer.start();
+                            playSong();
                         }
                         break;
 
@@ -227,21 +227,21 @@ public class UserListActivity extends Activity {
 //        });
     }
 
-//    private void playSong(){
+    private void playSong(){
 //        if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername()) && !mediaPlayer.isPlaying()){
 //            publishMessage("play");
 //        }
-//        mediaPlayer.start();
-////        rockShareServerHandler.updateSong(list.get(songIndex).getName());
-////        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
-//
+        mediaPlayer.start();
+//        rockShareServerHandler.updateSong(list.get(songIndex).getName());
+//        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
+
 //        runOnUiThread(new Runnable() {
 //            @Override
 //            public void run() {
 //                playAndPauseImageView.setImageResource(R.drawable.pause);
 //            }
 //        });
-//    }
+    }
 
 //    michael
 //    get song name and offset
@@ -289,8 +289,8 @@ public class UserListActivity extends Activity {
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                Log.d(TAG, "onPrepared");
-                mp.seekTo(offest);
+                Log.d(TAG, "onPrepared, duration: " + mp.getDuration() + ", offset: " + offest);
+//                mp.seekTo(0);
                 JSONObject message = new JSONObject();
                 try {
                     message.put("from", ParseUser.getCurrentUser().getUsername());
@@ -298,18 +298,20 @@ public class UserListActivity extends Activity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProgressDialog.dismiss();
+                    }
+                });
                 pubnub.publish(channel, message, publishCallback);
-//                try {
-//                    pubnub.subscribe(channel, subscribeCallback);
-//                } catch (PubnubException e) {
-//                    e.printStackTrace();
-//                }
-
-//                mp.start();
+//                mediaPlayer.seekTo(offest);
+//                mediaPlayer.start();
             }
         });
         try {
             mediaPlayer.prepare();
+            mediaPlayer.seekTo(offest);
         } catch (IOException e) {
             e.printStackTrace();
         }

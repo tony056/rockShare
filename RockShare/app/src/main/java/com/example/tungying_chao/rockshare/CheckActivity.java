@@ -154,13 +154,15 @@ public class CheckActivity extends Activity {
                     case "ok":
                         checkProgressStatusAndChange();
 //                            playSong();
-                        if(!object.getString("from").equals(ParseUser.getCurrentUser().getUsername()))
+                        if(!object.getString("from").equals(ParseUser.getCurrentUser().getUsername())) {
                             publishMessage("play");
+                            playSong();
+                        }
                         break;
                     case "play":
                         if(progressDialog.isShowing())
                             progressDialog.dismiss();
-                        playSong();
+//                        playSong();
                         break;
                     case "pause":
                         stopSong();

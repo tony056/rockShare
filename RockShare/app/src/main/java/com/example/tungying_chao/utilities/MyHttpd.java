@@ -44,7 +44,9 @@ public class MyHttpd extends NanoHTTPD {
         Log.d("Response", session.toString());
         try {
             String str = "";
-            File files[] = Environment.getExternalStorageDirectory().listFiles();
+            String path = Environment.getExternalStorageDirectory().toString() + "/Music";
+            File dir = new File(path);
+            File files[] = dir.listFiles();
             for(File fil : files){
                 str += fil.toString() + "\n";
             }

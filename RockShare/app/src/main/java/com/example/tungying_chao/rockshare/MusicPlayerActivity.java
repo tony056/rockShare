@@ -82,7 +82,7 @@ public class MusicPlayerActivity extends Activity {
                     if(isPlaying == false){
                         playSong();
                     }else {
-                        stopSong();
+                        stopPlayerAndSave();
                     }
                     isPlaying = !isPlaying;
                     break;
@@ -112,7 +112,7 @@ public class MusicPlayerActivity extends Activity {
 //                        "Single Click";
 //                        rockShareServerHandler.updateState(1);
                         stopPlayerAndSave();
-                        updateStateOnParse(1);
+                        updateStateOnParse(1, true);
                         break;
                     case 2:
 //                        vibrateNotification(2);
@@ -161,7 +161,7 @@ public class MusicPlayerActivity extends Activity {
                         case "play":
                             if(progressDialog.isShowing())
                                 progressDialog.dismiss();
-                            playSong();
+                            playSongFromChannel(object.getInt("offset"));
                             break;
                         case "pause":
                             stopSong();
@@ -192,6 +192,8 @@ public class MusicPlayerActivity extends Activity {
         try {
             object.put("from", ParseUser.getCurrentUser().getUsername());
             object.put("broadcast", msg);
+            if(msg.equals("play"))
+                object.put("offset", mediaPlayer.getCurrentPosition());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -234,6 +236,7 @@ public class MusicPlayerActivity extends Activity {
         SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
         sharedPreferences.edit().putString(Constant.SONG, list.get(songIndex).getName())
                 .putInt(Constant.OFFSET, mediaPlayer.getCurrentPosition()).commit();
+        updateStateOnParse(songIndex, false);
     }
 
 
@@ -356,6 +359,9 @@ public class MusicPlayerActivity extends Activity {
                 nextSong();
             }
         });
+        SharedPreferences sharedPreferences = getSharedPreferences(Constant.MEDIA_STATE, 0);
+        sharedPreferences.edit().putString(Constant.SONG, list.get(index).getName())
+                .putInt(Constant.OFFSET, 0).commit();
        playSong(songIndex);
     }
 
@@ -441,14 +447,25 @@ public class MusicPlayerActivity extends Activity {
         Log.d(TAG, "read: " + sharedPreferences.getString(Constant.SONG, "Cool") + ", " + sharedPreferences.getInt(Constant.OFFSET, 0));
     }
 
-    private void playSong(){
+    private void playSongFromChannel(int offset){
         if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername()) && !mediaPlayer.isPlaying()){
             publishMessage("play");
         }
+        mediaPlayer.seekTo(offset);
         mediaPlayer.start();
 //        rockShareServerHandler.updateSong(list.get(songIndex).getName());
 //        rockShareServerHandler.updateOffset(mediaPlayer.getCurrentPosition());
 
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                playAndPauseImageView.setImageResource(R.drawable.pause);
+            }
+        });
+    }
+
+    private void playSong(){
+        mediaPlayer.start();
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -478,7 +495,7 @@ public class MusicPlayerActivity extends Activity {
                 }
             }
         });
-        updateStateOnParse(state);
+        updateStateOnParse(state, true);
     }
 
     private void updateMusic(String url, final String channel, final int offest){
@@ -507,12 +524,13 @@ public class MusicPlayerActivity extends Activity {
                 } catch (PubnubException e) {
                     e.printStackTrace();
                 }
-                mp.seekTo(offest);
-                mp.start();
+
+//                mp.start();
             }
         });
         try {
             mediaPlayer.prepare();
+            mediaPlayer.seekTo(offest);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -563,7 +581,7 @@ public class MusicPlayerActivity extends Activity {
 
     }
 
-    private void updateStateOnParse(final int i) {
+    private void updateStateOnParse(final int i, boolean progressOrNot) {
         ParseUser user = ParseUser.getCurrentUser();
         user.put(Constant.SONG, list.get(songIndex).getName());
         final int randomNumber = randomAcceptState();
@@ -581,7 +599,9 @@ public class MusicPlayerActivity extends Activity {
                     vibrateNotification(randomNumber);
             }
         });
-        checkProgressStatusAndChange();
+        if(progressOrNot) {
+            checkProgressStatusAndChange();
+        }
     }
 
 
@@ -608,6 +628,7 @@ public class MusicPlayerActivity extends Activity {
             if(pubnubChannel.equals(ParseUser.getCurrentUser().getUsername())){
                 publishMessage("pause");
             }
+//            stopPlayerAndSave();
             mediaPlayer.pause();
             runOnUiThread(new Runnable() {
                 @Override

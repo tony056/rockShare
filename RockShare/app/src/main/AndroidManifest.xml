@@ -21,7 +21,7 @@
     <application
         android:name="com.example.tungying_chao.beanconnection.BeanConnectionApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/rockshare_small"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
