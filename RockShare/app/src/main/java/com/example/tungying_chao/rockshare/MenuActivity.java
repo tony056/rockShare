@@ -103,7 +103,7 @@ public class MenuActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.bean_menu, menu);
         return true;
     }
 
@@ -115,7 +115,15 @@ public class MenuActivity extends Activity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.disconnectBean) {
+
+            Bean myBean = ((BeanConnectionApplication) getApplicationContext()).getMyBean();
+            if(myBean != null) {
+                Log.d(TAG, "Disconnect");
+                myBean.setLed(0, 0, 0);
+                myBean.disconnect();
+                ((BeanConnectionApplication) getApplicationContext()).setMyBean(null);
+            }
             return true;
         }
 

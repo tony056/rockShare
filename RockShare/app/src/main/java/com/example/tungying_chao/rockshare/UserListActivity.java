@@ -60,7 +60,7 @@ public class UserListActivity extends Activity {
             Log.d(TAG, "clicked");
             ParseUser user = list.get(position);
             Log.d("TAG", user.getUsername());
-            if(user.getInt("state") == 0) {
+//            if(user.getInt("state") == 0) {
                 rockShareServerHandler.sendShareRequest(user);
                 try {
                     pubnub.subscribe(ParseUser.getCurrentUser().getUsername(), subscribeCallback);
@@ -77,9 +77,9 @@ public class UserListActivity extends Activity {
                         }
                     }
                 });
-            }
-            else
-                Toast.makeText(getApplicationContext(), user.getString("username") + " cannot share with you right now!", Toast.LENGTH_SHORT).show();
+//            }
+//            else
+//                Toast.makeText(getApplicationContext(), user.getString("username") + " cannot share with you right now!", Toast.LENGTH_SHORT).show();
         }
     };
 

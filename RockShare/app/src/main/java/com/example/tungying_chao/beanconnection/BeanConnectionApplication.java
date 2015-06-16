@@ -14,6 +14,7 @@ import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
 import com.parse.ParsePush;
+import com.parse.ParseUser;
 import com.parse.SaveCallback;
 import com.pubnub.api.Callback;
 import com.pubnub.api.Pubnub;
@@ -302,6 +303,11 @@ public class BeanConnectionApplication extends Application {
     private void parseInit(){
         Parse.enableLocalDatastore(this);
         Parse.initialize(this, "vPrTWP92aurD2s7K2f83wg0PZ6h49KtJ9Z68fzBQ", "ibTJC42hUleivVSORiEVRqG6ruX5qzgAOg1MjClK");
+        if(ParseUser.getCurrentUser() != null) {
+            Log.d(TAG, "logOut");
+            ParseUser.logOut();
+        }
+
     }
 
     private void httpServerInit(){

@@ -84,7 +84,7 @@ public class RockShareServerHandler {
                 Log.d(TAG, "signed up");
                 initInstallation();
                 if(e != null)
-                    e.printStackTrace();
+                    Log.d(TAG, "error " + e.getMessage());
             }
         });
 
